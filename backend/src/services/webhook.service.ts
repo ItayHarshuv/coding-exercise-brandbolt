@@ -1,6 +1,75 @@
 import { AppDataSource } from '../database';
 import { WebhookSubscription } from '../entities/WebhookSubscription';
 import { WebhookDelivery } from '../entities/WebhookDelivery';
+import axios from 'axios';
+import crypto from 'crypto';
+
+type WebhookPayload = {
+  event: string;
+  orderId: number;
+  data: Record<string, any>;
+  timestamp: string;
+};
+
+function signPayload(payload: WebhookPayload, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
+}
+
+async function sendAndRecordDelivery(
+  subscription: WebhookSubscription,
+  payload: WebhookPayload,
+  attemptNumber: number
+): Promise<WebhookDelivery> {
+  const deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
+  const signature = signPayload(payload, subscription.secret);
+
+  let statusCode: number | null = null;
+  let responseBody: string | null = null;
+  let success = false;
+
+  try {
+    const response = await axios.post(subscription.url, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Webhook-Signature': `sha256=${signature}`,
+      },
+      validateStatus: () => true,
+    });
+
+    statusCode = response.status;
+    responseBody = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+    success = response.status >= 200 && response.status < 300;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      statusCode = error.response?.status ?? null;
+      if (typeof error.response?.data === 'string') {
+        responseBody = error.response.data;
+      } else if (error.response?.data != null) {
+        responseBody = JSON.stringify(error.response.data);
+      } else {
+        responseBody = error.message;
+      }
+    } else if (error instanceof Error) {
+      responseBody = error.message;
+    } else {
+      responseBody = 'Unknown webhook delivery error';
+    }
+  }
+
+  const delivery = deliveryRepo.create({
+    subscriptionId: subscription.id,
+    orderId: payload.orderId,
+    event: payload.event,
+    payload,
+    statusCode,
+    responseBody,
+    success,
+    attemptNumber,
+    deliveredAt: new Date(),
+  });
+
+  return deliveryRepo.save(delivery);
+}
 
 /**
  * Triggers webhooks for a given order event.
@@ -32,18 +101,31 @@ export async function triggerWebhooks(
   event: string,
   payload: Record<string, any>
 ): Promise<void> {
-  // TODO: Implement webhook triggering logic
-  // This is intentionally left for the candidate to implement.
-  // See the JSDoc above for detailed implementation steps.
+  const subscriptionRepo = AppDataSource.getRepository(WebhookSubscription);
+  const subscriptions = await subscriptionRepo
+    .createQueryBuilder('subscription')
+    .where('subscription.isActive = :isActive', { isActive: true })
+    .andWhere('subscription.events LIKE :event', { event: `%${event}%` })
+    .getMany();
 
-  const _subscriptionRepo = AppDataSource.getRepository(WebhookSubscription);
-  const _deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
+  const matchingSubscriptions = subscriptions.filter((subscription) =>
+    subscription.events.includes(event)
+  );
 
-  // Hint: You'll need these imports:
-  // import axios from 'axios';
-  // import crypto from 'crypto';
-
-  console.log(`[Webhook] TODO: trigger webhooks for order ${orderId}, event: ${event}`);
+  await Promise.all(
+    matchingSubscriptions.map((subscription) =>
+      sendAndRecordDelivery(
+        subscription,
+        {
+          event,
+          orderId,
+          data: payload,
+          timestamp: new Date().toISOString(),
+        },
+        1
+      )
+    )
+  );
 }
 
 /**
@@ -60,6 +142,24 @@ export async function triggerWebhooks(
  * @returns The new WebhookDelivery record
  */
 export async function retryWebhookDelivery(deliveryId: number): Promise<WebhookDelivery> {
-  // TODO: Implement retry logic
-  throw new Error('Not implemented: retryWebhookDelivery');
+  const deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
+
+  const originalDelivery = await deliveryRepo.findOne({
+    where: { id: deliveryId },
+    relations: ['subscription'],
+  });
+
+  if (!originalDelivery) {
+    throw new Error('Webhook delivery not found');
+  }
+
+  if (!originalDelivery.subscription) {
+    throw new Error('Webhook subscription not found for delivery');
+  }
+
+  return sendAndRecordDelivery(
+    originalDelivery.subscription,
+    originalDelivery.payload as WebhookPayload,
+    originalDelivery.attemptNumber + 1
+  );
 }
