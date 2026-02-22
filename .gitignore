@@ -1,0 +1,43 @@
+# --- Dependencies ---
+**/node_modules/
+
+# --- Build outputs ---
+**/dist/
+**/build/
+**/.turbo/
+**/.cache/
+
+# --- TypeScript / tooling ---
+**/*.tsbuildinfo
+
+# --- Logs ---
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/*.log
+
+# --- Environment files ---
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# --- Test / coverage ---
+**/coverage/
+**/.nyc_output/
+
+# --- Runtime temp files ---
+**/tmp/
+**/temp/
+**/*.pid
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
