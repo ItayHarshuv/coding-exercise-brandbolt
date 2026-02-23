@@ -43,6 +43,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import api from '../api/client';
+import PageRefreshControls from '../components/PageRefreshControls';
 import { PaginatedResponse, WebhookDelivery, WebhookSubscription } from '../types';
 
 const EVENT_OPTIONS = [
@@ -52,6 +53,7 @@ const EVENT_OPTIONS = [
   'order.status.DELIVERED',
   'order.status.CANCELLED',
 ];
+const REFRESH_OPTIONS = [5, 10, 30];
 
 type FormState = {
   url: string;
@@ -63,6 +65,7 @@ type FormState = {
 export default function WebhooksPage() {
   const [subscriptions, setSubscriptions] = useState<WebhookSubscription[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -80,13 +83,15 @@ export default function WebhooksPage() {
   const [deliveryLoadingIds, setDeliveryLoadingIds] = useState<Set<number>>(new Set());
   const [deliveryPageBySubscription, setDeliveryPageBySubscription] = useState<Record<number, number>>({});
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(10);
   const [testResult, setTestResult] = useState<WebhookDelivery | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   const formTitle = useMemo(() => (editing ? 'Edit Subscription' : 'Add Subscription'), [editing]);
 
-  const loadSubscriptions = async () => {
-    setLoading(true);
+  const loadSubscriptions = async (initial = false) => {
+    if (initial) setLoading(true);
+    else setRefreshing(true);
     setError(null);
     try {
       const response = await api.get<WebhookSubscription[]>('/webhooks');
@@ -94,12 +99,13 @@ export default function WebhooksPage() {
     } catch (requestError: any) {
       setError(requestError?.response?.data?.error || 'Failed to load subscriptions');
     } finally {
-      setLoading(false);
+      if (initial) setLoading(false);
+      else setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    void loadSubscriptions();
+    void loadSubscriptions(true);
   }, []);
 
   const loadDeliveries = async (subscriptionId: number, page = 1) => {
@@ -123,15 +129,16 @@ export default function WebhooksPage() {
   };
 
   useEffect(() => {
-    if (!autoRefresh || expandedIds.size === 0) return;
+    if (!autoRefresh) return;
     const interval = window.setInterval(() => {
+      void loadSubscriptions(false);
       for (const subscriptionId of expandedIds) {
         const page = deliveryPageBySubscription[subscriptionId] || 1;
         void loadDeliveries(subscriptionId, page);
       }
-    }, 5000);
+    }, refreshInterval * 1000);
     return () => window.clearInterval(interval);
-  }, [autoRefresh, expandedIds, deliveryPageBySubscription]);
+  }, [autoRefresh, refreshInterval, expandedIds, deliveryPageBySubscription]);
 
   const openCreate = () => {
     setEditing(null);
@@ -163,7 +170,7 @@ export default function WebhooksPage() {
         setMessage({ type: 'success', text: 'Subscription created' });
       }
       setIsFormOpen(false);
-      await loadSubscriptions();
+      await loadSubscriptions(false);
     } catch (requestError: any) {
       setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to save subscription' });
     } finally {
@@ -175,7 +182,7 @@ export default function WebhooksPage() {
     setMessage(null);
     try {
       await api.put(`/webhooks/${subscription.id}`, { isActive: !subscription.isActive });
-      await loadSubscriptions();
+      await loadSubscriptions(false);
     } catch (requestError: any) {
       setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to update subscription' });
     }
@@ -186,7 +193,7 @@ export default function WebhooksPage() {
     setMessage(null);
     try {
       await api.delete(`/webhooks/${subscription.id}`);
-      await loadSubscriptions();
+      await loadSubscriptions(false);
     } catch (requestError: any) {
       setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to delete subscription' });
     }
@@ -237,17 +244,21 @@ export default function WebhooksPage() {
           <h1 className="page-title">Webhooks</h1>
           <p className="page-subtitle">Manage webhook subscriptions and delivery logs</p>
         </div>
-        <div className="page-header-actions">
-          <label className="toggle">
-            <input type="checkbox" checked={autoRefresh} onChange={(event) => setAutoRefresh(event.target.checked)} />
-            <span className="toggle-track"></span>
-            Auto-refresh
-          </label>
-          {autoRefresh && <span className="badge badge-active">Live</span>}
-          <button className="btn btn-primary" type="button" onClick={openCreate}>
-            + Add Subscription
-          </button>
-        </div>
+        <PageRefreshControls
+          refreshing={refreshing}
+          autoRefresh={autoRefresh}
+          onAutoRefreshChange={setAutoRefresh}
+          refreshInterval={refreshInterval}
+          onRefreshIntervalChange={setRefreshInterval}
+          refreshOptions={REFRESH_OPTIONS}
+          onRefresh={() => void loadSubscriptions(false)}
+          refreshDisabled={refreshing}
+        >
+          
+        </PageRefreshControls>
+        <button className="btn btn-primary" type="button" onClick={openCreate}>
+          + Add Subscription
+        </button>
       </div>
 
       {message && (
@@ -316,48 +327,50 @@ export default function WebhooksPage() {
                   </div>
                   {deliveryData[subscription.id] && (
                     <>
-                      <table className="table">
-                        <thead>
-                          <tr>
-                            <th>Event</th>
-                            <th>Order ID</th>
-                            <th>Status Code</th>
-                            <th>Result</th>
-                            <th>Timestamp</th>
-                            <th>Attempt</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {deliveryData[subscription.id].data.map((delivery) => (
-                            <tr key={delivery.id}>
-                              <td><span className="event-tag">{delivery.event}</span></td>
-                              <td className="font-semibold">#{delivery.orderId}</td>
-                              <td>{delivery.statusCode ?? 'N/A'}</td>
-                              <td>
-                                <span className={`badge ${delivery.success ? 'badge-success' : 'badge-failure'}`}>
-                                  {delivery.success ? 'Success' : 'Failed'}
-                                </span>
-                              </td>
-                              <td className="text-muted">
-                                {delivery.deliveredAt ? new Date(delivery.deliveredAt).toLocaleString() : 'N/A'}
-                              </td>
-                              <td>{delivery.attemptNumber}</td>
-                              <td>
-                                {!delivery.success && (
-                                  <button
-                                    className="btn btn-ghost btn-sm"
-                                    type="button"
-                                    onClick={() => void retryDelivery(subscription.id, delivery.id)}
-                                  >
-                                    Retry
-                                  </button>
-                                )}
-                              </td>
+                      <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+                        <table className="table">
+                          <thead>
+                            <tr>
+                              <th>Event</th>
+                              <th>Order ID</th>
+                              <th>Status Code</th>
+                              <th>Result</th>
+                              <th>Timestamp</th>
+                              <th>Attempt</th>
+                              <th>Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {deliveryData[subscription.id].data.map((delivery) => (
+                              <tr key={delivery.id}>
+                                <td><span className="event-tag">{delivery.event}</span></td>
+                                <td className="font-semibold">#{delivery.orderId}</td>
+                                <td>{delivery.statusCode ?? 'N/A'}</td>
+                                <td>
+                                  <span className={`badge ${delivery.success ? 'badge-success' : 'badge-failure'}`}>
+                                    {delivery.success ? 'Success' : 'Failed'}
+                                  </span>
+                                </td>
+                                <td className="text-muted">
+                                  {delivery.deliveredAt ? new Date(delivery.deliveredAt).toLocaleString() : 'N/A'}
+                                </td>
+                                <td>{delivery.attemptNumber}</td>
+                                <td>
+                                  {!delivery.success && (
+                                    <button
+                                      className="btn btn-ghost btn-sm"
+                                      type="button"
+                                      onClick={() => void retryDelivery(subscription.id, delivery.id)}
+                                    >
+                                      Retry
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                       <div className="delivery-pagination">
                         <button
                           className="btn btn-ghost btn-sm"

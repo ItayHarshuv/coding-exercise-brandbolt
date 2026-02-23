@@ -31,6 +31,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import PageRefreshControls from '../components/PageRefreshControls';
 import { DashboardStats, OrderStatus } from '../types';
 
 const REFRESH_OPTIONS = [5, 10, 30];
@@ -92,36 +93,16 @@ export default function DashboardPage() {
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">Overview of your order system performance</p>
         </div>
-        <div className="page-header-actions">
-          {refreshing && (
-            <span className="refreshing-indicator">
-              <span className="spinner"></span>
-              Refreshing
-            </span>
-          )}
-          <label className="toggle">
-            <input type="checkbox" checked={autoRefresh} onChange={(event) => setAutoRefresh(event.target.checked)} />
-            <span className="toggle-track"></span>
-            Auto-refresh
-          </label>
-          <select
-            className="form-select"
-            style={{ width: 'auto', minWidth: 70 }}
-            value={refreshInterval}
-            onChange={(event) => setRefreshInterval(Number(event.target.value))}
-            disabled={!autoRefresh}
-          >
-            {REFRESH_OPTIONS.map((seconds) => (
-              <option key={seconds} value={seconds}>
-                {seconds}s
-              </option>
-            ))}
-          </select>
-          <button className="btn btn-secondary" type="button" onClick={() => void loadStats(false)} disabled={refreshing}>
-            Refresh
-          </button>
-          {autoRefresh && <span className="badge badge-active">Live</span>}
-        </div>
+        <PageRefreshControls
+          refreshing={refreshing}
+          autoRefresh={autoRefresh}
+          onAutoRefreshChange={setAutoRefresh}
+          refreshInterval={refreshInterval}
+          onRefreshIntervalChange={setRefreshInterval}
+          refreshOptions={REFRESH_OPTIONS}
+          onRefresh={() => void loadStats(false)}
+          refreshDisabled={refreshing}
+        />
       </div>
 
       {loading && (
