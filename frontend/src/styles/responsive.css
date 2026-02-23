@@ -1,0 +1,76 @@
+/* Responsible for responsive overrides and breakpoint-specific layout adjustments. */
+
+@media (max-width: 1024px) {
+  .card-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .card-grid-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .topbar-brand-sub {
+    display: none;
+  }
+
+  .topbar-toggle {
+    display: inline-flex;
+  }
+
+  .topbar-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-left: 0;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border);
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-xs);
+  }
+
+  .topbar-nav.open {
+    display: flex;
+  }
+
+  .nav-link {
+    width: 100%;
+    padding: 10px 12px;
+  }
+
+  .main {
+    padding: var(--space-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .table {
+    min-width: 720px;
+  }
+
+  .card-grid-2,
+  .card-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .card-grid-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .line-item-row {
+    grid-template-columns: 1fr;
+  }
+}
