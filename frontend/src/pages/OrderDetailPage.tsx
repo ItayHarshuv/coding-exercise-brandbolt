@@ -51,6 +51,7 @@ import { useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import StatusChangeConfirmModal from '../components/StatusChangeConfirmModal';
 import { Order, OrderStatus } from '../types';
 
 const STATUS_FLOW: OrderStatus[] = [
@@ -87,6 +88,8 @@ export default function OrderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
+  const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [notesDraft, setNotesDraft] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
@@ -126,7 +129,6 @@ export default function OrderDetailPage() {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!unsavedChanges) return;
       event.preventDefault();
-      event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
@@ -134,10 +136,6 @@ export default function OrderDetailPage() {
 
   const handleStatusChange = async (nextStatus: OrderStatus) => {
     if (!order) return;
-    const confirmed = window.confirm(
-      `Are you sure you want to change status from ${order.status} to ${nextStatus}?`
-    );
-    if (!confirmed) return;
 
     setStatusLoading(true);
     setActionMessage(null);
@@ -148,6 +146,8 @@ export default function OrderDetailPage() {
     } catch (requestError: any) {
       setActionMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to update status' });
     } finally {
+      setPendingStatus(null);
+      setIsStatusConfirmOpen(false);
       setStatusLoading(false);
     }
   };
@@ -241,7 +241,8 @@ export default function OrderDetailPage() {
               onChange={(event) => {
                 const value = event.target.value as OrderStatus | '';
                 if (!value) return;
-                void handleStatusChange(value);
+                setPendingStatus(value);
+                setIsStatusConfirmOpen(true);
                 event.target.value = '';
               }}
               disabled={statusLoading}
@@ -262,6 +263,21 @@ export default function OrderDetailPage() {
           {actionMessage.text}
         </div>
       )}
+      <StatusChangeConfirmModal
+        isOpen={isStatusConfirmOpen}
+        title="Confirm Status Change"
+        onClose={() => {
+          setIsStatusConfirmOpen(false);
+          setPendingStatus(null);
+        }}
+        onConfirm={() => (pendingStatus ? handleStatusChange(pendingStatus) : undefined)}
+        loading={statusLoading}
+      >
+        <p className="text-secondary">
+          Change order status from <span className="font-bold">{order.status}</span> to{' '}
+          <span className="font-bold">{pendingStatus}</span>?
+        </p>
+      </StatusChangeConfirmModal>
 
       <div className="detail-section mb-lg">
         <div className="detail-section-title">Status Timeline</div>

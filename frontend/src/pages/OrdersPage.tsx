@@ -56,6 +56,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import StatusChangeConfirmModal from '../components/StatusChangeConfirmModal';
 import {
   BulkStatusResult,
   CreateOrderRequest,
@@ -429,32 +430,18 @@ export default function OrdersPage() {
 
       {loadError && <div className="alert alert-error">{loadError}</div>}
 
-      {isBulkConfirmOpen && (
-        <div className="modal-overlay" onClick={() => setIsBulkConfirmOpen(false)}>
-          <div className="modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Confirm Bulk Update</h2>
-              <button className="btn btn-ghost btn-sm" type="button" onClick={() => setIsBulkConfirmOpen(false)}>
-                &#10005;
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="text-secondary">
-                Update <span className="font-bold">{selectedIds.size}</span> selected orders to{' '}
-                <span className="font-bold">{bulkStatus}</span>?
-              </p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" type="button" onClick={() => setIsBulkConfirmOpen(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-accent" type="button" onClick={() => void confirmBulkUpdate()} disabled={bulkLoading}>
-                {bulkLoading ? 'Updating...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusChangeConfirmModal
+        isOpen={isBulkConfirmOpen}
+        title="Confirm Bulk Update"
+        onClose={() => setIsBulkConfirmOpen(false)}
+        onConfirm={confirmBulkUpdate}
+        loading={bulkLoading}
+      >
+        <p className="text-secondary">
+          Update <span className="font-bold">{selectedIds.size}</span> selected orders to{' '}
+          <span className="font-bold">{bulkStatus}</span>?
+        </p>
+      </StatusChangeConfirmModal>
 
       {loading ? (
         <div className="loading-container">
