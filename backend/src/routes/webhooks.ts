@@ -2,9 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../database';
 import { WebhookSubscription } from '../entities/WebhookSubscription';
 import { WebhookDelivery } from '../entities/WebhookDelivery';
-import { retryWebhookDelivery } from '../services/webhook.service';
-import axios from 'axios';
-import crypto from 'crypto';
+import { retryWebhookDelivery, sendAndRecordDelivery, type WebhookPayload } from '../services/webhook.service';
 
 const router = Router();
 const DEFAULT_PAGE_SIZE = 20;
@@ -16,64 +14,6 @@ function isValidUrl(value: string): boolean {
   } catch {
     return false;
   }
-}
-
-function signPayload(payload: Record<string, any>, secret: string): string {
-  return crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
-}
-
-async function sendAndRecordDelivery(
-  subscription: WebhookSubscription,
-  payload: Record<string, any>,
-  attemptNumber: number
-): Promise<WebhookDelivery> {
-  const deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
-  const signature = signPayload(payload, subscription.secret);
-
-  let statusCode: number | undefined;
-  let responseBody: string | undefined;
-  let success = false;
-
-  try {
-    const response = await axios.post(subscription.url, payload, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Webhook-Signature': `sha256=${signature}`,
-      },
-      validateStatus: () => true,
-    });
-    statusCode = response.status;
-    responseBody = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
-    success = response.status >= 200 && response.status < 300;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      statusCode = error.response?.status ?? undefined;
-      if (typeof error.response?.data === 'string') {
-        responseBody = error.response.data;
-      } else if (error.response?.data != null) {
-        responseBody = JSON.stringify(error.response.data);
-      } else {
-        responseBody = error.message;
-      }
-    } else if (error instanceof Error) {
-      responseBody = error.message;
-    } else {
-      responseBody = 'Unknown webhook delivery error';
-    }
-  }
-
-  const delivery = new WebhookDelivery();
-  delivery.subscriptionId = subscription.id;
-  delivery.orderId = Number(payload.orderId ?? 0);
-  delivery.event = String(payload.event ?? 'test');
-  delivery.payload = payload;
-  delivery.statusCode = (statusCode ?? null) as any;
-  delivery.responseBody = (responseBody ?? null) as any;
-  delivery.success = success;
-  delivery.attemptNumber = attemptNumber;
-  delivery.deliveredAt = new Date();
-
-  return deliveryRepo.save(delivery);
 }
 
 /**
@@ -304,7 +244,7 @@ router.post('/:id/test', async (req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    const payload = {
+    const payload: WebhookPayload = {
       event: 'test',
       orderId: 0,
       data: { message: 'Test webhook delivery' },
