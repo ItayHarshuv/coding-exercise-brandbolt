@@ -253,9 +253,7 @@ export default function WebhooksPage() {
           refreshOptions={REFRESH_OPTIONS}
           onRefresh={() => void loadSubscriptions(false)}
           refreshDisabled={refreshing}
-        >
-          
-        </PageRefreshControls>
+        />
         <button className="btn btn-primary" type="button" onClick={openCreate}>
           + Add Subscription
         </button>

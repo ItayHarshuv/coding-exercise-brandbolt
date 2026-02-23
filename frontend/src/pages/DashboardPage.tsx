@@ -32,6 +32,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import PageRefreshControls from '../components/PageRefreshControls';
+import StatCard from '../components/StatCard';
 import { DashboardStats, OrderStatus } from '../types';
 
 const REFRESH_OPTIONS = [5, 10, 30];
@@ -115,15 +116,9 @@ export default function DashboardPage() {
       {!loading && stats && (
         <>
           <div className="card-grid card-grid-4 mb-lg" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-            <div className="stat-card stat-card--revenue">
-              <span className="stat-card-label">Total Revenue</span>
-              <span className="stat-card-value revenue">{formatCurrency(stats.totalRevenue)}</span>
-            </div>
+            <StatCard label="Total Revenue" value={formatCurrency(stats.totalRevenue)} variant="revenue" valueClassName="revenue" />
             {statusOrder.map((status) => (
-              <div key={status} className={`stat-card stat-card--${STATUS_CLASS_MAP[status]}`}>
-                <span className="stat-card-label">{status}</span>
-                <span className="stat-card-value">{stats.statusCounts[status] ?? 0}</span>
-              </div>
+              <StatCard key={status} label={status} value={stats.statusCounts[status] ?? 0} variant={STATUS_CLASS_MAP[status]} />
             ))}
           </div>
 
