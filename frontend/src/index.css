@@ -1256,6 +1256,7 @@ body {
   font-size: var(--text-sm);
   font-weight: 500;
   margin-bottom: var(--space-md);
+  white-space: pre-line;
 }
 
 .alert-success {

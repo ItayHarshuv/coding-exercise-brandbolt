@@ -79,7 +79,7 @@ const STATUS_CLASS_MAP: Record<string, string> = {
 };
 
 type SortableColumn = 'id' | 'status' | 'totalAmount' | 'createdAt';
-type OrderCreateLine = { productId: number | null; quantity: number; productSearch: string };
+type OrderCreateLine = { productId: number | null; quantity: number};
 
 export default function OrdersPage() {
   const navigate = useNavigate();
@@ -89,9 +89,11 @@ export default function OrdersPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [ordersRefreshNonce, setOrdersRefreshNonce] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<OrderStatus | ''>('');
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [isBulkConfirmOpen, setIsBulkConfirmOpen] = useState(false);
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -105,7 +107,7 @@ export default function OrdersPage() {
   const [newOrderCustomerId, setNewOrderCustomerId] = useState<number | null>(null);
   const [newOrderNotes, setNewOrderNotes] = useState('');
   const [newOrderItems, setNewOrderItems] = useState<OrderCreateLine[]>([
-    { productId: null, quantity: 1, productSearch: '' },
+    { productId: null, quantity: 1},
   ]);
 
   const statuses = useMemo(() => {
@@ -169,7 +171,7 @@ export default function OrdersPage() {
       }
     };
     void fetchOrders();
-  }, [statuses, search, sortBy, sortDir, page, pageSize]);
+  }, [statuses, search, sortBy, sortDir, page, pageSize, ordersRefreshNonce]);
 
   useEffect(() => {
     if (!isCreateOpen || (customers.length > 0 && products.length > 0)) return;
@@ -192,12 +194,28 @@ export default function OrdersPage() {
   const pageStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const pageEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
 
-  const visibleCustomerOptions = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(customerSearch.toLowerCase())
+  const visibleCustomerOptions = useMemo(
+    () =>
+      customers.filter((customer) =>
+        customer.name.toLowerCase().includes(customerSearch.toLowerCase())
+      ),
+    [customers, customerSearch]
   );
   const visibleProducts = products.filter((product) =>
     product.name.toLowerCase().includes(productSearch.toLowerCase())
   );
+
+  useEffect(() => {
+    if (!isCreateOpen) return;
+    const timeout = window.setTimeout(() => {
+      if (!customerSearch.trim()) {
+        setNewOrderCustomerId(null);
+        return;
+      }
+      setNewOrderCustomerId(visibleCustomerOptions[0]?.id ?? null);
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [customerSearch, isCreateOpen, visibleCustomerOptions]);
 
   const runningTotal = newOrderItems.reduce((acc, item) => {
     const product = products.find((productItem) => productItem.id === item.productId);
@@ -242,9 +260,14 @@ export default function OrdersPage() {
     });
   };
 
-  const handleBulkUpdate = async () => {
+  const handleBulkUpdate = () => {
     if (!bulkStatus || selectedIds.size === 0) return;
-    if (!window.confirm(`Update ${selectedIds.size} orders to ${bulkStatus}?`)) return;
+    setIsBulkConfirmOpen(true);
+  };
+
+  const confirmBulkUpdate = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    setIsBulkConfirmOpen(false);
     setBulkLoading(true);
     setBulkMessage(null);
     try {
@@ -255,8 +278,19 @@ export default function OrdersPage() {
       const { succeeded, failed } = response.data;
       setSelectedIds(new Set());
       setBulkStatus('');
-      setBulkMessage(`Updated ${succeeded.length} orders, ${failed.length} failed.`);
-      updateParams({});
+      const summary = `Updated ${succeeded.length} orders, ${failed.length} failed.`;
+      const successDetails = succeeded.map((id) => `#${id}`).join('\n');
+      const failedDetails = failed.map(({ id, reason }) => `#${id}: ${reason}`).join('\n');
+
+      const sections = [summary];
+      if (succeeded.length > 0) {
+        sections.push(`Updated orders:\n${successDetails}`);
+      }
+      if (failed.length > 0) {
+        sections.push(`Failed details:\n${failedDetails}`);
+      }
+      setBulkMessage(sections.join('\n\n'));
+      setOrdersRefreshNonce((previous) => previous + 1);
     } catch (error: any) {
       setBulkMessage(error?.response?.data?.error || 'Bulk update failed');
     } finally {
@@ -267,7 +301,7 @@ export default function OrdersPage() {
   const resetCreateForm = () => {
     setNewOrderCustomerId(null);
     setNewOrderNotes('');
-    setNewOrderItems([{ productId: null, quantity: 1, productSearch: '' }]);
+    setNewOrderItems([{ productId: null, quantity: 1}]);
     setCreateError(null);
     setCustomerSearch('');
     setProductSearch('');
@@ -310,7 +344,7 @@ export default function OrdersPage() {
     try {
       await api.post('/orders', payload);
       closeCreate();
-      updateParams({});
+      setOrdersRefreshNonce((previous) => previous + 1);
     } catch (error: any) {
       setCreateError(error?.response?.data?.error || 'Failed to create order');
     } finally {
@@ -385,7 +419,7 @@ export default function OrdersPage() {
             className="btn btn-accent btn-sm"
             type="button"
             disabled={!bulkStatus || bulkLoading}
-            onClick={handleBulkUpdate}
+            onClick={() => void handleBulkUpdate()}
           >
             {bulkLoading ? 'Updating...' : 'Update Status'}
           </button>
@@ -394,6 +428,33 @@ export default function OrdersPage() {
       {bulkMessage && <div className="alert alert-info">{bulkMessage}</div>}
 
       {loadError && <div className="alert alert-error">{loadError}</div>}
+
+      {isBulkConfirmOpen && (
+        <div className="modal-overlay" onClick={() => setIsBulkConfirmOpen(false)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Confirm Bulk Update</h2>
+              <button className="btn btn-ghost btn-sm" type="button" onClick={() => setIsBulkConfirmOpen(false)}>
+                &#10005;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="text-secondary">
+                Update <span className="font-bold">{selectedIds.size}</span> selected orders to{' '}
+                <span className="font-bold">{bulkStatus}</span>?
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" type="button" onClick={() => setIsBulkConfirmOpen(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-accent" type="button" onClick={() => void confirmBulkUpdate()} disabled={bulkLoading}>
+                {bulkLoading ? 'Updating...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="loading-container">
@@ -573,13 +634,13 @@ export default function OrdersPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Line Items</label>
-                  <input
+                  <label className="form-label">Items</label>
+                  {/* <input
                     className="form-input"
                     value={productSearch}
                     onChange={(event) => setProductSearch(event.target.value)}
                     placeholder="Search products..."
-                  />
+                  /> */}
                   {newOrderItems.map((item, index) => {
                     const selectedProduct = products.find((product) => product.id === item.productId);
                     const lineTotal = selectedProduct ? selectedProduct.price * item.quantity : 0;
