@@ -4,7 +4,7 @@ import { WebhookDelivery } from '../entities/WebhookDelivery';
 import axios from 'axios';
 import crypto from 'crypto';
 
-type WebhookPayload = {
+export type WebhookPayload = {
   event: string;
   orderId: number;
   data: Record<string, any>;
@@ -15,7 +15,7 @@ function signPayload(payload: WebhookPayload, secret: string): string {
   return crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
 }
 
-async function sendAndRecordDelivery(
+export async function sendAndRecordDelivery(
   subscription: WebhookSubscription,
   payload: WebhookPayload,
   attemptNumber: number

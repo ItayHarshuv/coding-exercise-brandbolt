@@ -23,10 +23,10 @@ export class WebhookDelivery {
   payload: Record<string, any>;
 
   @Column({ nullable: true })
-  statusCode: number;
+  statusCode: number | null;
 
   @Column({ type: 'text', nullable: true })
-  responseBody: string;
+  responseBody: string | null;
 
   @Column()
   success: boolean;
@@ -35,7 +35,7 @@ export class WebhookDelivery {
   attemptNumber: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  deliveredAt: Date;
+  deliveredAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;
