@@ -5,6 +5,7 @@ import { OrderItem } from '../entities/OrderItem';
 import { Customer } from '../entities/Customer';
 import { Product } from '../entities/Product';
 import { triggerWebhooks } from '../services/webhook.service';
+import { In } from 'typeorm';
 
 const router = Router();
 const ALLOWED_SORT_COLUMNS = new Set(['id', 'status', 'totalAmount', 'createdAt']);
@@ -127,7 +128,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const productIds = items.map((item) => item.productId);
-    const products = await productRepo.findByIds(productIds);
+    const products = await productRepo.findBy({ id: In(productIds) });
     const productMap = new Map(products.map((product) => [product.id, product]));
 
     for (const item of items) {
