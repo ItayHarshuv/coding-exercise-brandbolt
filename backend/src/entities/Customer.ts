@@ -1,7 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { Order } from './Order';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { Order } from "./Order";
 
-@Entity('customers')
+@Entity("customers")
 export class Customer {
   @PrimaryGeneratedColumn()
   id: number;

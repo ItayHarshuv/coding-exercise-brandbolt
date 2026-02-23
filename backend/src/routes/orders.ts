@@ -1,14 +1,19 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '../database';
-import { Order, OrderStatus } from '../entities/Order';
-import { OrderItem } from '../entities/OrderItem';
-import { Customer } from '../entities/Customer';
-import { Product } from '../entities/Product';
-import { triggerWebhooks } from '../services/webhook.service';
-import { In } from 'typeorm';
+import { Router, Request, Response, NextFunction } from "express";
+import { AppDataSource } from "../database";
+import { Order, OrderStatus } from "../entities/Order";
+import { OrderItem } from "../entities/OrderItem";
+import { Customer } from "../entities/Customer";
+import { Product } from "../entities/Product";
+import { triggerWebhooks } from "../services/webhook.service";
+import { In } from "typeorm";
 
 const router = Router();
-const ALLOWED_SORT_COLUMNS = new Set(['id', 'status', 'totalAmount', 'createdAt']);
+const ALLOWED_SORT_COLUMNS = new Set([
+  "id",
+  "status",
+  "totalAmount",
+  "createdAt",
+]);
 const ALLOWED_PAGE_SIZES = new Set([10, 25, 50]);
 const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
@@ -44,34 +49,42 @@ function canTransition(from: OrderStatus, to: OrderStatus): boolean {
  *
  * Each order should include the customer relation (for displaying customer name).
  */
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const orderRepo = AppDataSource.getRepository(Order);
-    const rawStatus = String(req.query.status ?? '').trim();
-    const search = String(req.query.search ?? '').trim();
-    const sortBy = String(req.query.sortBy ?? 'createdAt');
-    const sortDirRaw = String(req.query.sortDir ?? 'DESC').toUpperCase();
-    const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10) || 1);
-    const requestedPageSize = Number.parseInt(String(req.query.pageSize ?? '10'), 10) || 10;
-    const pageSize = ALLOWED_PAGE_SIZES.has(requestedPageSize) ? requestedPageSize : 10;
-    const sortColumn = ALLOWED_SORT_COLUMNS.has(sortBy) ? sortBy : 'createdAt';
-    const sortDir = sortDirRaw === 'ASC' ? 'ASC' : 'DESC';
+    const rawStatus = String(req.query.status ?? "").trim();
+    const search = String(req.query.search ?? "").trim();
+    const sortBy = String(req.query.sortBy ?? "createdAt");
+    const sortDirRaw = String(req.query.sortDir ?? "DESC").toUpperCase();
+    const page = Math.max(
+      1,
+      Number.parseInt(String(req.query.page ?? "1"), 10) || 1,
+    );
+    const requestedPageSize =
+      Number.parseInt(String(req.query.pageSize ?? "10"), 10) || 10;
+    const pageSize = ALLOWED_PAGE_SIZES.has(requestedPageSize)
+      ? requestedPageSize
+      : 10;
+    const sortColumn = ALLOWED_SORT_COLUMNS.has(sortBy) ? sortBy : "createdAt";
+    const sortDir = sortDirRaw === "ASC" ? "ASC" : "DESC";
     const statuses = rawStatus
-      .split(',')
+      .split(",")
       .map((status) => status.trim())
       .filter((status): status is OrderStatus => isOrderStatus(status));
 
     const query = orderRepo
-      .createQueryBuilder('order')
-      .leftJoinAndSelect('order.customer', 'customer')
+      .createQueryBuilder("order")
+      .leftJoinAndSelect("order.customer", "customer")
       .orderBy(`order.${sortColumn}`, sortDir);
 
     if (statuses.length > 0) {
-      query.andWhere('order.status IN (:...statuses)', { statuses });
+      query.andWhere("order.status IN (:...statuses)", { statuses });
     }
 
     if (search.length > 0) {
-      query.andWhere('LOWER(customer.name) LIKE :search', { search: `%${search.toLowerCase()}%` });
+      query.andWhere("LOWER(customer.name) LIKE :search", {
+        search: `%${search.toLowerCase()}%`,
+      });
     }
 
     query.skip((page - 1) * pageSize).take(pageSize);
@@ -105,7 +118,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
  *
  * Response: The created Order object with items and customer
  */
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { customerId, items, notes } = req.body as {
       customerId?: number;
@@ -113,7 +126,9 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       notes?: string;
     };
     if (!customerId || !Array.isArray(items) || items.length === 0) {
-      res.status(400).json({ error: 'customerId and at least one item are required' });
+      res
+        .status(400)
+        .json({ error: "customerId and at least one item are required" });
       return;
     }
 
@@ -123,17 +138,21 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     const customer = await customerRepo.findOne({ where: { id: customerId } });
     if (!customer) {
-      res.status(400).json({ error: 'Customer not found' });
+      res.status(400).json({ error: "Customer not found" });
       return;
     }
 
     const productIds = items.map((item) => item.productId);
     const products = await productRepo.findBy({ id: In(productIds) });
-    const productMap = new Map(products.map((product) => [product.id, product]));
+    const productMap = new Map(
+      products.map((product) => [product.id, product]),
+    );
 
     for (const item of items) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-        res.status(400).json({ error: `Invalid quantity for product ${item.productId}` });
+        res
+          .status(400)
+          .json({ error: `Invalid quantity for product ${item.productId}` });
         return;
       }
       const product = productMap.get(item.productId);
@@ -142,7 +161,9 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         return;
       }
       if (item.quantity > product.stockQuantity) {
-        res.status(400).json({ error: `Insufficient stock for product ${product.name}` });
+        res
+          .status(400)
+          .json({ error: `Insufficient stock for product ${product.name}` });
         return;
       }
     }
@@ -159,7 +180,10 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return orderItem;
     });
 
-    const totalAmount = orderItems.reduce((acc, item) => acc + Number(item.lineTotal), 0);
+    const totalAmount = orderItems.reduce(
+      (acc, item) => acc + Number(item.lineTotal),
+      0,
+    );
     const order = orderRepo.create({
       customerId,
       items: orderItems,
@@ -171,7 +195,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     const savedOrder = await orderRepo.save(order);
     const hydratedOrder = await orderRepo.findOne({
       where: { id: savedOrder.id },
-      relations: ['customer', 'items', 'items.product'],
+      relations: ["customer", "items", "items.product"],
     });
 
     res.status(201).json(hydratedOrder);
@@ -190,16 +214,16 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
  * Response: The Order object with all relations
  * Error: 404 if not found
  */
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = Number.parseInt(req.params.id, 10);
     const order = await AppDataSource.getRepository(Order).findOne({
       where: { id },
-      relations: ['customer', 'items', 'items.product'],
+      relations: ["customer", "items", "items.product"],
     });
 
     if (!order) {
-      res.status(404).json({ error: 'Order not found' });
+      res.status(404).json({ error: "Order not found" });
       return;
     }
 
@@ -225,51 +249,57 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
  * Response: The updated Order object
  * Error: 404 if not found
  */
-router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = Number.parseInt(req.params.id, 10);
-    const { notes, status } = req.body as { notes?: string; status?: OrderStatus };
-    const orderRepo = AppDataSource.getRepository(Order);
+router.patch(
+  "/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Number.parseInt(req.params.id, 10);
+      const { notes, status } = req.body as {
+        notes?: string;
+        status?: OrderStatus;
+      };
+      const orderRepo = AppDataSource.getRepository(Order);
 
-    const order = await orderRepo.findOne({
-      where: { id },
-      relations: ['customer', 'items', 'items.product'],
-    });
-    if (!order) {
-      res.status(404).json({ error: 'Order not found' });
-      return;
-    }
-
-    const previousStatus = order.status;
-    if (typeof notes !== 'undefined') {
-      order.notes = notes?.trim() || null;
-    }
-    if (typeof status !== 'undefined') {
-      if (!isOrderStatus(status)) {
-        res.status(400).json({ error: 'Invalid status value' });
+      const order = await orderRepo.findOne({
+        where: { id },
+        relations: ["customer", "items", "items.product"],
+      });
+      if (!order) {
+        res.status(404).json({ error: "Order not found" });
         return;
       }
-      order.status = status;
-    }
 
-    const updated = await orderRepo.save(order);
-    if (status && status !== previousStatus) {
-      await triggerWebhooks(order.id, `order.status.${status}`, {
-        previousStatus,
-        status,
-        order: updated,
+      const previousStatus = order.status;
+      if (typeof notes !== "undefined") {
+        order.notes = notes?.trim() || null;
+      }
+      if (typeof status !== "undefined") {
+        if (!isOrderStatus(status)) {
+          res.status(400).json({ error: "Invalid status value" });
+          return;
+        }
+        order.status = status;
+      }
+
+      const updated = await orderRepo.save(order);
+      if (status && status !== previousStatus) {
+        await triggerWebhooks(order.id, `order.status.${status}`, {
+          previousStatus,
+          status,
+          order: updated,
+        });
+      }
+
+      const refreshed = await orderRepo.findOne({
+        where: { id: updated.id },
+        relations: ["customer", "items", "items.product"],
       });
+      res.json(refreshed);
+    } catch (err) {
+      next(err);
     }
-
-    const refreshed = await orderRepo.findOne({
-      where: { id: updated.id },
-      relations: ['customer', 'items', 'items.product'],
-    });
-    res.json(refreshed);
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 /**
  * PATCH /api/orders/:id/status
@@ -297,48 +327,55 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
  * Response: The updated Order object
  * Errors: 404 if not found, 400 if invalid transition
  */
-router.patch('/:id/status', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = Number.parseInt(req.params.id, 10);
-    const { status } = req.body as { status?: OrderStatus };
-    if (!status || !isOrderStatus(status)) {
-      res.status(400).json({ error: 'Valid status is required' });
-      return;
+router.patch(
+  "/:id/status",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Number.parseInt(req.params.id, 10);
+      const { status } = req.body as { status?: OrderStatus };
+      if (!status || !isOrderStatus(status)) {
+        res.status(400).json({ error: "Valid status is required" });
+        return;
+      }
+
+      const orderRepo = AppDataSource.getRepository(Order);
+      const order = await orderRepo.findOne({
+        where: { id },
+        relations: ["customer", "items", "items.product"],
+      });
+      if (!order) {
+        res.status(404).json({ error: "Order not found" });
+        return;
+      }
+
+      if (!canTransition(order.status, status)) {
+        res
+          .status(400)
+          .json({
+            error: `Invalid status transition: ${order.status} -> ${status}`,
+          });
+        return;
+      }
+
+      const previousStatus = order.status;
+      order.status = status;
+      const updated = await orderRepo.save(order);
+      await triggerWebhooks(updated.id, `order.status.${status}`, {
+        previousStatus,
+        status,
+        order: updated,
+      });
+
+      const refreshed = await orderRepo.findOne({
+        where: { id: updated.id },
+        relations: ["customer", "items", "items.product"],
+      });
+      res.json(refreshed);
+    } catch (err) {
+      next(err);
     }
-
-    const orderRepo = AppDataSource.getRepository(Order);
-    const order = await orderRepo.findOne({
-      where: { id },
-      relations: ['customer', 'items', 'items.product'],
-    });
-    if (!order) {
-      res.status(404).json({ error: 'Order not found' });
-      return;
-    }
-
-    if (!canTransition(order.status, status)) {
-      res.status(400).json({ error: `Invalid status transition: ${order.status} -> ${status}` });
-      return;
-    }
-
-    const previousStatus = order.status;
-    order.status = status;
-    const updated = await orderRepo.save(order);
-    await triggerWebhooks(updated.id, `order.status.${status}`, {
-      previousStatus,
-      status,
-      order: updated,
-    });
-
-    const refreshed = await orderRepo.findOne({
-      where: { id: updated.id },
-      relations: ['customer', 'items', 'items.product'],
-    });
-    res.json(refreshed);
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 /**
  * POST /api/orders/bulk-status
@@ -359,52 +396,61 @@ router.patch('/:id/status', async (req: Request, res: Response, next: NextFuncti
  *
  * Response: { succeeded: number[], failed: Array<{ id: number, reason: string }> }
  */
-router.post('/bulk-status', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { orderIds, status } = req.body as { orderIds?: number[]; status?: OrderStatus };
-    if (!Array.isArray(orderIds) || orderIds.length === 0) {
-      res.status(400).json({ error: 'orderIds must be a non-empty array' });
-      return;
-    }
-    if (!status || !isOrderStatus(status)) {
-      res.status(400).json({ error: 'Valid target status is required' });
-      return;
-    }
-
-    const orderRepo = AppDataSource.getRepository(Order);
-    const succeeded: number[] = [];
-    const failed: Array<{ id: number; reason: string }> = [];
-
-    for (const id of orderIds) {
-      const order = await orderRepo.findOne({
-        where: { id },
-        relations: ['customer', 'items', 'items.product'],
-      });
-      if (!order) {
-        failed.push({ id, reason: 'Order not found' });
-        continue;
+router.post(
+  "/bulk-status",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { orderIds, status } = req.body as {
+        orderIds?: number[];
+        status?: OrderStatus;
+      };
+      if (!Array.isArray(orderIds) || orderIds.length === 0) {
+        res.status(400).json({ error: "orderIds must be a non-empty array" });
+        return;
+      }
+      if (!status || !isOrderStatus(status)) {
+        res.status(400).json({ error: "Valid target status is required" });
+        return;
       }
 
-      if (!canTransition(order.status, status)) {
-        failed.push({ id, reason: `Invalid transition: ${order.status} -> ${status}` });
-        continue;
+      const orderRepo = AppDataSource.getRepository(Order);
+      const succeeded: number[] = [];
+      const failed: Array<{ id: number; reason: string }> = [];
+
+      for (const id of orderIds) {
+        const order = await orderRepo.findOne({
+          where: { id },
+          relations: ["customer", "items", "items.product"],
+        });
+        if (!order) {
+          failed.push({ id, reason: "Order not found" });
+          continue;
+        }
+
+        if (!canTransition(order.status, status)) {
+          failed.push({
+            id,
+            reason: `Invalid transition: ${order.status} -> ${status}`,
+          });
+          continue;
+        }
+
+        const previousStatus = order.status;
+        order.status = status;
+        const updated = await orderRepo.save(order);
+        succeeded.push(id);
+        await triggerWebhooks(updated.id, `order.status.${status}`, {
+          previousStatus,
+          status,
+          order: updated,
+        });
       }
 
-      const previousStatus = order.status;
-      order.status = status;
-      const updated = await orderRepo.save(order);
-      succeeded.push(id);
-      await triggerWebhooks(updated.id, `order.status.${status}`, {
-        previousStatus,
-        status,
-        order: updated,
-      });
+      res.json({ succeeded, failed });
+    } catch (err) {
+      next(err);
     }
-
-    res.json({ succeeded, failed });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 export default router;

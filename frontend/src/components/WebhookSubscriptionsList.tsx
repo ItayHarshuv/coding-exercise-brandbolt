@@ -1,4 +1,8 @@
-import { PaginatedResponse, WebhookDelivery, WebhookSubscription } from '../types';
+import {
+  PaginatedResponse,
+  WebhookDelivery,
+  WebhookSubscription,
+} from "../types";
 
 type WebhookSubscriptionsListProps = {
   loading: boolean;
@@ -43,8 +47,13 @@ export default function WebhookSubscriptionsList({
   return (
     <div className="flex flex-col gap-md">
       {subscriptions.length === 0 && (
-        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-          <p className="text-muted">No subscriptions yet. Create one to get started.</p>
+        <div
+          className="card"
+          style={{ textAlign: "center", padding: "var(--space-2xl)" }}
+        >
+          <p className="text-muted">
+            No subscriptions yet. Create one to get started.
+          </p>
         </div>
       )}
       {subscriptions.map((subscription) => {
@@ -52,15 +61,23 @@ export default function WebhookSubscriptionsList({
         const deliveryPage = deliveryPageBySubscription[subscription.id] || 1;
         const subscriptionDeliveryData = deliveryData[subscription.id];
         const totalDeliveryPages = subscriptionDeliveryData
-          ? Math.max(1, Math.ceil(subscriptionDeliveryData.total / subscriptionDeliveryData.pageSize))
+          ? Math.max(
+              1,
+              Math.ceil(
+                subscriptionDeliveryData.total /
+                  subscriptionDeliveryData.pageSize,
+              ),
+            )
           : 1;
 
         return (
           <div key={subscription.id} className="subscription-card">
             <div className="subscription-card-header">
               <span className="subscription-url">{subscription.url}</span>
-              <span className={`badge ${subscription.isActive ? 'badge-active' : 'badge-inactive'}`}>
-                {subscription.isActive ? 'Active' : 'Inactive'}
+              <span
+                className={`badge ${subscription.isActive ? "badge-active" : "badge-inactive"}`}
+              >
+                {subscription.isActive ? "Active" : "Inactive"}
               </span>
               <div className="subscription-actions">
                 <label className="toggle" style={{ margin: 0 }}>
@@ -71,23 +88,41 @@ export default function WebhookSubscriptionsList({
                   />
                   <span className="toggle-track"></span>
                 </label>
-                <button className="btn btn-ghost btn-sm" type="button" onClick={() => onEdit(subscription)}>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  type="button"
+                  onClick={() => onEdit(subscription)}
+                >
                   Edit
                 </button>
-                <button className="btn btn-danger btn-sm" type="button" onClick={() => onDelete(subscription)}>
+                <button
+                  className="btn btn-danger btn-sm"
+                  type="button"
+                  onClick={() => onDelete(subscription)}
+                >
                   Delete
                 </button>
-                <button className="btn btn-accent btn-sm" type="button" onClick={() => onSendTest(subscription.id)}>
+                <button
+                  className="btn btn-accent btn-sm"
+                  type="button"
+                  onClick={() => onSendTest(subscription.id)}
+                >
                   Test
                 </button>
-                <button className="btn btn-secondary btn-sm" type="button" onClick={() => onToggleExpanded(subscription.id)}>
-                  {isExpanded ? 'Hide Log' : 'Show Log'}
+                <button
+                  className="btn btn-secondary btn-sm"
+                  type="button"
+                  onClick={() => onToggleExpanded(subscription.id)}
+                >
+                  {isExpanded ? "Hide Log" : "Show Log"}
                 </button>
               </div>
             </div>
             <div className="subscription-events">
               {subscription.events.map((eventName) => (
-                <span key={eventName} className="event-tag">{eventName}</span>
+                <span key={eventName} className="event-tag">
+                  {eventName}
+                </span>
               ))}
             </div>
 
@@ -104,7 +139,10 @@ export default function WebhookSubscriptionsList({
                 </div>
                 {subscriptionDeliveryData && (
                   <>
-                    <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+                    <div
+                      className="table-wrapper"
+                      style={{ border: "none", borderRadius: 0 }}
+                    >
                       <table className="table">
                         <thead>
                           <tr>
@@ -120,16 +158,28 @@ export default function WebhookSubscriptionsList({
                         <tbody>
                           {subscriptionDeliveryData.data.map((delivery) => (
                             <tr key={delivery.id}>
-                              <td><span className="event-tag">{delivery.event}</span></td>
-                              <td className="font-semibold">#{delivery.orderId}</td>
-                              <td>{delivery.statusCode ?? 'N/A'}</td>
                               <td>
-                                <span className={`badge ${delivery.success ? 'badge-success' : 'badge-failure'}`}>
-                                  {delivery.success ? 'Success' : 'Failed'}
+                                <span className="event-tag">
+                                  {delivery.event}
+                                </span>
+                              </td>
+                              <td className="font-semibold">
+                                #{delivery.orderId}
+                              </td>
+                              <td>{delivery.statusCode ?? "N/A"}</td>
+                              <td>
+                                <span
+                                  className={`badge ${delivery.success ? "badge-success" : "badge-failure"}`}
+                                >
+                                  {delivery.success ? "Success" : "Failed"}
                                 </span>
                               </td>
                               <td className="text-muted">
-                                {delivery.deliveredAt ? new Date(delivery.deliveredAt).toLocaleString() : 'N/A'}
+                                {delivery.deliveredAt
+                                  ? new Date(
+                                      delivery.deliveredAt,
+                                    ).toLocaleString()
+                                  : "N/A"}
                               </td>
                               <td>{delivery.attemptNumber}</td>
                               <td>
@@ -137,7 +187,12 @@ export default function WebhookSubscriptionsList({
                                   <button
                                     className="btn btn-ghost btn-sm"
                                     type="button"
-                                    onClick={() => onRetryDelivery(subscription.id, delivery.id)}
+                                    onClick={() =>
+                                      onRetryDelivery(
+                                        subscription.id,
+                                        delivery.id,
+                                      )
+                                    }
                                   >
                                     Retry
                                   </button>
@@ -153,7 +208,12 @@ export default function WebhookSubscriptionsList({
                         className="btn btn-ghost btn-sm"
                         type="button"
                         disabled={deliveryPage <= 1}
-                        onClick={() => onLoadDeliveriesPage(subscription.id, deliveryPage - 1)}
+                        onClick={() =>
+                          onLoadDeliveriesPage(
+                            subscription.id,
+                            deliveryPage - 1,
+                          )
+                        }
                       >
                         Prev
                       </button>
@@ -164,7 +224,12 @@ export default function WebhookSubscriptionsList({
                         className="btn btn-ghost btn-sm"
                         type="button"
                         disabled={deliveryPage >= totalDeliveryPages}
-                        onClick={() => onLoadDeliveriesPage(subscription.id, deliveryPage + 1)}
+                        onClick={() =>
+                          onLoadDeliveriesPage(
+                            subscription.id,
+                            deliveryPage + 1,
+                          )
+                        }
                       >
                         Next
                       </button>

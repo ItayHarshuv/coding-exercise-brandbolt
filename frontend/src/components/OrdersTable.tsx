@@ -1,6 +1,10 @@
-import { Order, OrderStatus } from '../types';
+import { Order, OrderStatus } from "../types";
 
-export type OrdersSortableColumn = 'id' | 'status' | 'totalAmount' | 'createdAt';
+export type OrdersSortableColumn =
+  | "id"
+  | "status"
+  | "totalAmount"
+  | "createdAt";
 
 type OrdersTableProps = {
   loading: boolean;
@@ -8,7 +12,7 @@ type OrdersTableProps = {
   selectedIds: Set<number>;
   allOnPageSelected: boolean;
   sortBy: OrdersSortableColumn;
-  sortDir: 'ASC' | 'DESC';
+  sortDir: "ASC" | "DESC";
   statusClassMap: Record<OrderStatus, string>;
   pageStart: number;
   pageEnd: number;
@@ -48,8 +52,8 @@ export default function OrdersTable({
   onPageSizeChange,
 }: OrdersTableProps) {
   const sortIndicator = (column: OrdersSortableColumn) => {
-    if (sortBy !== column) return '';
-    return sortDir === 'ASC' ? ' \u2191' : ' \u2193';
+    if (sortBy !== column) return "";
+    return sortDir === "ASC" ? " \u2191" : " \u2193";
   };
 
   if (loading) {
@@ -70,44 +74,46 @@ export default function OrdersTable({
               <input
                 type="checkbox"
                 checked={allOnPageSelected}
-                onChange={(event) => onToggleSelectAllOnPage(event.target.checked)}
+                onChange={(event) =>
+                  onToggleSelectAllOnPage(event.target.checked)
+                }
               />
             </th>
             <th>
               <button
                 type="button"
-                className={`sort-btn${sortBy === 'id' ? ' active' : ''}`}
-                onClick={() => onSort('id')}
+                className={`sort-btn${sortBy === "id" ? " active" : ""}`}
+                onClick={() => onSort("id")}
               >
-                ID{sortIndicator('id')}
+                ID{sortIndicator("id")}
               </button>
             </th>
             <th>Customer</th>
             <th>
               <button
                 type="button"
-                className={`sort-btn${sortBy === 'status' ? ' active' : ''}`}
-                onClick={() => onSort('status')}
+                className={`sort-btn${sortBy === "status" ? " active" : ""}`}
+                onClick={() => onSort("status")}
               >
-                Status{sortIndicator('status')}
+                Status{sortIndicator("status")}
               </button>
             </th>
             <th>
               <button
                 type="button"
-                className={`sort-btn${sortBy === 'totalAmount' ? ' active' : ''}`}
-                onClick={() => onSort('totalAmount')}
+                className={`sort-btn${sortBy === "totalAmount" ? " active" : ""}`}
+                onClick={() => onSort("totalAmount")}
               >
-                Total{sortIndicator('totalAmount')}
+                Total{sortIndicator("totalAmount")}
               </button>
             </th>
             <th>
               <button
                 type="button"
-                className={`sort-btn${sortBy === 'createdAt' ? ' active' : ''}`}
-                onClick={() => onSort('createdAt')}
+                className={`sort-btn${sortBy === "createdAt" ? " active" : ""}`}
+                onClick={() => onSort("createdAt")}
               >
-                Date{sortIndicator('createdAt')}
+                Date{sortIndicator("createdAt")}
               </button>
             </th>
           </tr>
@@ -119,7 +125,9 @@ export default function OrdersTable({
                 <input
                   type="checkbox"
                   checked={selectedIds.has(order.id)}
-                  onChange={(event) => onToggleOrderSelected(order.id, event.target.checked)}
+                  onChange={(event) =>
+                    onToggleOrderSelected(order.id, event.target.checked)
+                  }
                 />
               </td>
               <td className="font-semibold">#{order.id}</td>
@@ -129,13 +137,19 @@ export default function OrdersTable({
                   {order.status}
                 </span>
               </td>
-              <td className="font-semibold">${Number(order.totalAmount).toFixed(2)}</td>
-              <td className="text-muted">{new Date(order.createdAt).toLocaleString()}</td>
+              <td className="font-semibold">
+                ${Number(order.totalAmount).toFixed(2)}
+              </td>
+              <td className="text-muted">
+                {new Date(order.createdAt).toLocaleString()}
+              </td>
             </tr>
           ))}
           {orders.length === 0 && (
             <tr>
-              <td colSpan={6} className="table-empty">No orders found.</td>
+              <td colSpan={6} className="table-empty">
+                No orders found.
+              </td>
             </tr>
           )}
         </tbody>
@@ -154,17 +168,19 @@ export default function OrdersTable({
           >
             Prev
           </button>
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
-            <button
-              key={pageNumber}
-              type="button"
-              className={`pagination-btn${pageNumber === page ? ' active' : ''}`}
-              disabled={pageNumber === page}
-              onClick={() => onPageChange(pageNumber)}
-            >
-              {pageNumber}
-            </button>
-          ))}
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+            (pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                className={`pagination-btn${pageNumber === page ? " active" : ""}`}
+                disabled={pageNumber === page}
+                onClick={() => onPageChange(pageNumber)}
+              >
+                {pageNumber}
+              </button>
+            ),
+          )}
           <button
             className="pagination-btn"
             type="button"

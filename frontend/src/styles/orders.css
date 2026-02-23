@@ -192,7 +192,7 @@
 }
 
 .timeline-step::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 14px;
   left: calc(50% + 16px);
@@ -238,7 +238,11 @@
 }
 
 .timeline-step.current::after {
-  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-border) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-border) 100%
+  );
 }
 
 .timeline-label {

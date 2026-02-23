@@ -1,4 +1,4 @@
-import { Order, STATUS_CLASS_MAP } from '../types';
+import { Order, STATUS_CLASS_MAP } from "../types";
 
 type RecentOrdersTableProps = {
   orders: Order[];
@@ -6,13 +6,20 @@ type RecentOrdersTableProps = {
   formatCurrency: (value: number) => string;
 };
 
-export default function RecentOrdersTable({ orders, onOrderClick, formatCurrency }: RecentOrdersTableProps) {
+export default function RecentOrdersTable({
+  orders,
+  onOrderClick,
+  formatCurrency,
+}: RecentOrdersTableProps) {
   return (
     <div className="card">
       <div className="card-header">
         <h2 className="card-title">Recent Orders</h2>
       </div>
-      <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+      <div
+        className="table-wrapper"
+        style={{ border: "none", borderRadius: 0 }}
+      >
         <table className="table table-clickable">
           <thead>
             <tr>
@@ -29,10 +36,18 @@ export default function RecentOrdersTable({ orders, onOrderClick, formatCurrency
                 <td className="font-semibold">#{order.id}</td>
                 <td>{order.customer.name}</td>
                 <td>
-                  <span className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}>{order.status}</span>
+                  <span
+                    className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}
+                  >
+                    {order.status}
+                  </span>
                 </td>
-                <td className="font-semibold">{formatCurrency(order.totalAmount)}</td>
-                <td className="text-muted">{new Date(order.createdAt).toLocaleString()}</td>
+                <td className="font-semibold">
+                  {formatCurrency(order.totalAmount)}
+                </td>
+                <td className="text-muted">
+                  {new Date(order.createdAt).toLocaleString()}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -1,9 +1,15 @@
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import WebhooksPage from './pages/WebhooksPage';
-import DashboardPage from './pages/DashboardPage';
+import { useState } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  NavLink,
+  Navigate,
+} from "react-router-dom";
+import OrdersPage from "./pages/OrdersPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
+import WebhooksPage from "./pages/WebhooksPage";
+import DashboardPage from "./pages/DashboardPage";
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,21 +34,44 @@ export default function App() {
             onClick={() => setIsMenuOpen((open) => !open)}
             aria-expanded={isMenuOpen}
             aria-controls="topbar-nav"
-            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-label={
+              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
           >
-            {isMenuOpen ? '\u00d7' : '\u2630'}
+            {isMenuOpen ? "\u00d7" : "\u2630"}
           </button>
 
-          <nav id="topbar-nav" className={`topbar-nav${isMenuOpen ? ' open' : ''}`}>
-            <NavLink to="/dashboard" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+          <nav
+            id="topbar-nav"
+            className={`topbar-nav${isMenuOpen ? " open" : ""}`}
+          >
+            <NavLink
+              to="/dashboard"
+              onClick={closeMenu}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
               <span className="nav-link-icon">&#9633;</span>
               Dashboard
             </NavLink>
-            <NavLink to="/orders" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            <NavLink
+              to="/orders"
+              onClick={closeMenu}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
               <span className="nav-link-icon">&#9776;</span>
               Orders
             </NavLink>
-            <NavLink to="/webhooks" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            <NavLink
+              to="/webhooks"
+              onClick={closeMenu}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
               <span className="nav-link-icon">&#9889;</span>
               Webhooks
             </NavLink>

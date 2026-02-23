@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 type PageRefreshControlsProps = {
   autoRefresh: boolean;
@@ -22,7 +22,7 @@ export default function PageRefreshControls({
   refreshOptions,
   onRefresh,
   refreshDisabled = false,
-  refreshButtonLabel = 'Refresh',
+  refreshButtonLabel = "Refresh",
   children,
 }: PageRefreshControlsProps) {
   return (
@@ -35,16 +35,22 @@ export default function PageRefreshControls({
       )}
 
       <label className="toggle">
-        <input type="checkbox" checked={autoRefresh} onChange={(event) => onAutoRefreshChange(event.target.checked)} />
+        <input
+          type="checkbox"
+          checked={autoRefresh}
+          onChange={(event) => onAutoRefreshChange(event.target.checked)}
+        />
         <span className="toggle-track"></span>
         Auto-refresh
       </label>
 
       <select
         className="form-select"
-        style={{ width: 'auto', minWidth: 70 }}
+        style={{ width: "auto", minWidth: 70 }}
         value={refreshInterval}
-        onChange={(event) => onRefreshIntervalChange(Number(event.target.value))}
+        onChange={(event) =>
+          onRefreshIntervalChange(Number(event.target.value))
+        }
         disabled={!autoRefresh}
       >
         {refreshOptions.map((seconds) => (
@@ -54,7 +60,12 @@ export default function PageRefreshControls({
         ))}
       </select>
 
-      <button className="btn btn-secondary" type="button" onClick={onRefresh} disabled={refreshDisabled || refreshing}>
+      <button
+        className="btn btn-secondary"
+        type="button"
+        onClick={onRefresh}
+        disabled={refreshDisabled || refreshing}
+      >
         {refreshButtonLabel}
       </button>
 

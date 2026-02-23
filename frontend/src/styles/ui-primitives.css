@@ -61,7 +61,7 @@
 }
 
 .stat-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -94,13 +94,28 @@
   color: var(--color-primary);
 }
 
-.stat-card--pending::before { background: var(--color-status-pending); }
-.stat-card--confirmed::before { background: var(--color-status-confirmed); }
-.stat-card--processing::before { background: var(--color-status-processing); }
-.stat-card--shipped::before { background: var(--color-status-shipped); }
-.stat-card--delivered::before { background: var(--color-status-delivered); }
-.stat-card--cancelled::before { background: var(--color-status-cancelled); }
-.stat-card--revenue::before { background: linear-gradient(90deg, var(--color-primary) 0%, #e8c840 100%); height: 3px; }
+.stat-card--pending::before {
+  background: var(--color-status-pending);
+}
+.stat-card--confirmed::before {
+  background: var(--color-status-confirmed);
+}
+.stat-card--processing::before {
+  background: var(--color-status-processing);
+}
+.stat-card--shipped::before {
+  background: var(--color-status-shipped);
+}
+.stat-card--delivered::before {
+  background: var(--color-status-delivered);
+}
+.stat-card--cancelled::before {
+  background: var(--color-status-cancelled);
+}
+.stat-card--revenue::before {
+  background: linear-gradient(90deg, var(--color-primary) 0%, #e8c840 100%);
+  height: 3px;
+}
 
 .btn {
   display: inline-flex;
@@ -132,7 +147,11 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--color-primary-hover) 0%, #e8c840 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-hover) 0%,
+    #e8c840 100%
+  );
   box-shadow: 0 0 20px var(--color-primary-glow);
 }
 
@@ -302,7 +321,7 @@
 }
 
 .badge::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -313,61 +332,81 @@
   background: var(--color-status-pending-bg);
   color: var(--color-status-pending);
 }
-.badge-pending::before { background: var(--color-status-pending); }
+.badge-pending::before {
+  background: var(--color-status-pending);
+}
 
 .badge-confirmed {
   background: var(--color-status-confirmed-bg);
   color: var(--color-status-confirmed);
 }
-.badge-confirmed::before { background: var(--color-status-confirmed); }
+.badge-confirmed::before {
+  background: var(--color-status-confirmed);
+}
 
 .badge-processing {
   background: var(--color-status-processing-bg);
   color: var(--color-status-processing);
 }
-.badge-processing::before { background: var(--color-status-processing); }
+.badge-processing::before {
+  background: var(--color-status-processing);
+}
 
 .badge-shipped {
   background: var(--color-status-shipped-bg);
   color: var(--color-status-shipped);
 }
-.badge-shipped::before { background: var(--color-status-shipped); }
+.badge-shipped::before {
+  background: var(--color-status-shipped);
+}
 
 .badge-delivered {
   background: var(--color-status-delivered-bg);
   color: var(--color-status-delivered);
 }
-.badge-delivered::before { background: var(--color-status-delivered); }
+.badge-delivered::before {
+  background: var(--color-status-delivered);
+}
 
 .badge-cancelled {
   background: var(--color-status-cancelled-bg);
   color: var(--color-status-cancelled);
 }
-.badge-cancelled::before { background: var(--color-status-cancelled); }
+.badge-cancelled::before {
+  background: var(--color-status-cancelled);
+}
 
 .badge-success {
   background: var(--color-success-bg);
   color: var(--color-success);
 }
-.badge-success::before { background: var(--color-success); }
+.badge-success::before {
+  background: var(--color-success);
+}
 
 .badge-failure {
   background: var(--color-danger-bg);
   color: var(--color-danger);
 }
-.badge-failure::before { background: var(--color-danger); }
+.badge-failure::before {
+  background: var(--color-danger);
+}
 
 .badge-active {
   background: var(--color-success-bg);
   color: var(--color-success);
 }
-.badge-active::before { background: var(--color-success); }
+.badge-active::before {
+  background: var(--color-success);
+}
 
 .badge-inactive {
   background: rgba(92, 99, 122, 0.12);
   color: var(--color-text-muted);
 }
-.badge-inactive::before { background: var(--color-text-muted); }
+.badge-inactive::before {
+  background: var(--color-text-muted);
+}
 
 .event-tag {
   display: inline-flex;
@@ -493,7 +532,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .refreshing-indicator {

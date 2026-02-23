@@ -1,8 +1,12 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '../database';
-import { WebhookSubscription } from '../entities/WebhookSubscription';
-import { WebhookDelivery } from '../entities/WebhookDelivery';
-import { retryWebhookDelivery, sendAndRecordDelivery, type WebhookPayload } from '../services/webhook.service';
+import { Router, Request, Response, NextFunction } from "express";
+import { AppDataSource } from "../database";
+import { WebhookSubscription } from "../entities/WebhookSubscription";
+import { WebhookDelivery } from "../entities/WebhookDelivery";
+import {
+  retryWebhookDelivery,
+  sendAndRecordDelivery,
+  type WebhookPayload,
+} from "../services/webhook.service";
 
 const router = Router();
 const DEFAULT_PAGE_SIZE = 20;
@@ -23,10 +27,12 @@ function isValidUrl(value: string): boolean {
  *
  * Response: Array of WebhookSubscription objects
  */
-router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+router.get("/", async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const subscriptions = await AppDataSource.getRepository(WebhookSubscription).find({
-      order: { createdAt: 'DESC' },
+    const subscriptions = await AppDataSource.getRepository(
+      WebhookSubscription,
+    ).find({
+      order: { createdAt: "DESC" },
     });
     res.json(subscriptions);
   } catch (err) {
@@ -55,7 +61,7 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
  *
  * Response: The created WebhookSubscription
  */
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { url, secret, events, isActive } = req.body as {
       url?: string;
@@ -65,15 +71,21 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     };
 
     if (!url || !isValidUrl(url)) {
-      res.status(400).json({ error: 'Valid url is required' });
+      res.status(400).json({ error: "Valid url is required" });
       return;
     }
     if (!secret || !secret.trim()) {
-      res.status(400).json({ error: 'secret is required' });
+      res.status(400).json({ error: "secret is required" });
       return;
     }
-    if (!Array.isArray(events) || events.length === 0 || events.some((event) => !event || !event.trim())) {
-      res.status(400).json({ error: 'events must be a non-empty string array' });
+    if (
+      !Array.isArray(events) ||
+      events.length === 0 ||
+      events.some((event) => !event || !event.trim())
+    ) {
+      res
+        .status(400)
+        .json({ error: "events must be a non-empty string array" });
       return;
     }
 
@@ -82,7 +94,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       url: url.trim(),
       secret: secret.trim(),
       events: events.map((event) => event.trim()),
-      isActive: typeof isActive === 'boolean' ? isActive : true,
+      isActive: typeof isActive === "boolean" ? isActive : true,
     });
     const saved = await repo.save(created);
     res.status(201).json(saved);
@@ -107,13 +119,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
  * Response: The updated WebhookSubscription
  * Error: 404 if not found
  */
-router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = Number.parseInt(req.params.id, 10);
     const repo = AppDataSource.getRepository(WebhookSubscription);
     const subscription = await repo.findOne({ where: { id } });
     if (!subscription) {
-      res.status(404).json({ error: 'Webhook subscription not found' });
+      res.status(404).json({ error: "Webhook subscription not found" });
       return;
     }
 
@@ -124,28 +136,34 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
       isActive?: boolean;
     };
 
-    if (typeof url !== 'undefined') {
+    if (typeof url !== "undefined") {
       if (!url || !isValidUrl(url)) {
-        res.status(400).json({ error: 'Valid url is required' });
+        res.status(400).json({ error: "Valid url is required" });
         return;
       }
       subscription.url = url.trim();
     }
-    if (typeof secret !== 'undefined') {
+    if (typeof secret !== "undefined") {
       if (!secret.trim()) {
-        res.status(400).json({ error: 'secret cannot be empty' });
+        res.status(400).json({ error: "secret cannot be empty" });
         return;
       }
       subscription.secret = secret.trim();
     }
-    if (typeof events !== 'undefined') {
-      if (!Array.isArray(events) || events.length === 0 || events.some((event) => !event || !event.trim())) {
-        res.status(400).json({ error: 'events must be a non-empty string array' });
+    if (typeof events !== "undefined") {
+      if (
+        !Array.isArray(events) ||
+        events.length === 0 ||
+        events.some((event) => !event || !event.trim())
+      ) {
+        res
+          .status(400)
+          .json({ error: "events must be a non-empty string array" });
         return;
       }
       subscription.events = events.map((event) => event.trim());
     }
-    if (typeof isActive === 'boolean') {
+    if (typeof isActive === "boolean") {
       subscription.isActive = isActive;
     }
 
@@ -164,21 +182,24 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
  * Response: 204 No Content
  * Error: 404 if not found
  */
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = Number.parseInt(req.params.id, 10);
-    const repo = AppDataSource.getRepository(WebhookSubscription);
-    const subscription = await repo.findOne({ where: { id } });
-    if (!subscription) {
-      res.status(404).json({ error: 'Webhook subscription not found' });
-      return;
+router.delete(
+  "/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Number.parseInt(req.params.id, 10);
+      const repo = AppDataSource.getRepository(WebhookSubscription);
+      const subscription = await repo.findOne({ where: { id } });
+      if (!subscription) {
+        res.status(404).json({ error: "Webhook subscription not found" });
+        return;
+      }
+      await repo.remove(subscription);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
     }
-    await repo.remove(subscription);
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 /**
  * GET /api/webhooks/:id/deliveries
@@ -192,33 +213,43 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
  * Response: { data: WebhookDelivery[], total: number, page: number, pageSize: number }
  * Error: 404 if subscription not found
  */
-router.get('/:id/deliveries', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = Number.parseInt(req.params.id, 10);
-    const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10) || 1);
-    const requestedPageSize = Number.parseInt(String(req.query.pageSize ?? String(DEFAULT_PAGE_SIZE)), 10);
-    const pageSize = requestedPageSize > 0 ? requestedPageSize : DEFAULT_PAGE_SIZE;
+router.get(
+  "/:id/deliveries",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Number.parseInt(req.params.id, 10);
+      const page = Math.max(
+        1,
+        Number.parseInt(String(req.query.page ?? "1"), 10) || 1,
+      );
+      const requestedPageSize = Number.parseInt(
+        String(req.query.pageSize ?? String(DEFAULT_PAGE_SIZE)),
+        10,
+      );
+      const pageSize =
+        requestedPageSize > 0 ? requestedPageSize : DEFAULT_PAGE_SIZE;
 
-    const subscriptionRepo = AppDataSource.getRepository(WebhookSubscription);
-    const exists = await subscriptionRepo.findOne({ where: { id } });
-    if (!exists) {
-      res.status(404).json({ error: 'Webhook subscription not found' });
-      return;
+      const subscriptionRepo = AppDataSource.getRepository(WebhookSubscription);
+      const exists = await subscriptionRepo.findOne({ where: { id } });
+      if (!exists) {
+        res.status(404).json({ error: "Webhook subscription not found" });
+        return;
+      }
+
+      const deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
+      const [data, total] = await deliveryRepo.findAndCount({
+        where: { subscriptionId: id },
+        order: { createdAt: "DESC" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      });
+
+      res.json({ data, total, page, pageSize });
+    } catch (err) {
+      next(err);
     }
-
-    const deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
-    const [data, total] = await deliveryRepo.findAndCount({
-      where: { subscriptionId: id },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
-
-    res.json({ data, total, page, pageSize });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 /**
  * POST /api/webhooks/:id/test
@@ -234,28 +265,31 @@ router.get('/:id/deliveries', async (req: Request, res: Response, next: NextFunc
  * Response: The WebhookDelivery record for the test
  * Error: 404 if subscription not found
  */
-router.post('/:id/test', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = Number.parseInt(req.params.id, 10);
-    const subscriptionRepo = AppDataSource.getRepository(WebhookSubscription);
-    const subscription = await subscriptionRepo.findOne({ where: { id } });
-    if (!subscription) {
-      res.status(404).json({ error: 'Webhook subscription not found' });
-      return;
-    }
+router.post(
+  "/:id/test",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Number.parseInt(req.params.id, 10);
+      const subscriptionRepo = AppDataSource.getRepository(WebhookSubscription);
+      const subscription = await subscriptionRepo.findOne({ where: { id } });
+      if (!subscription) {
+        res.status(404).json({ error: "Webhook subscription not found" });
+        return;
+      }
 
-    const payload: WebhookPayload = {
-      event: 'test',
-      orderId: 0,
-      data: { message: 'Test webhook delivery' },
-      timestamp: new Date().toISOString(),
-    };
-    const delivery = await sendAndRecordDelivery(subscription, payload, 1);
-    res.status(201).json(delivery);
-  } catch (err) {
-    next(err);
-  }
-});
+      const payload: WebhookPayload = {
+        event: "test",
+        orderId: 0,
+        data: { message: "Test webhook delivery" },
+        timestamp: new Date().toISOString(),
+      };
+      const delivery = await sendAndRecordDelivery(subscription, payload, 1);
+      res.status(201).json(delivery);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 /**
  * POST /api/webhooks/deliveries/:id/retry
@@ -267,18 +301,21 @@ router.post('/:id/test', async (req: Request, res: Response, next: NextFunction)
  * Response: The new WebhookDelivery record
  * Error: 404 if delivery not found
  */
-router.post('/deliveries/:id/retry', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = Number.parseInt(req.params.id, 10);
-    const delivery = await retryWebhookDelivery(id);
-    res.status(201).json(delivery);
-  } catch (err) {
-    if (err instanceof Error && err.message.includes('not found')) {
-      res.status(404).json({ error: err.message });
-      return;
+router.post(
+  "/deliveries/:id/retry",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Number.parseInt(req.params.id, 10);
+      const delivery = await retryWebhookDelivery(id);
+      res.status(201).json(delivery);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      next(err);
     }
-    next(err);
-  }
-});
+  },
+);
 
 export default router;

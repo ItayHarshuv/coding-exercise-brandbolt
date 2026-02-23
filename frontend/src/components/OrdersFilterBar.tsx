@@ -1,4 +1,4 @@
-import { OrderStatus } from '../types';
+import { OrderStatus } from "../types";
 
 type OrdersFilterBarProps = {
   searchDraft: string;
@@ -28,7 +28,7 @@ export default function OrdersFilterBar({
           {statusOptions.map((status) => (
             <label
               key={status}
-              className={`form-checkbox-label${statuses.includes(status) ? ' checked' : ''}`}
+              className={`form-checkbox-label${statuses.includes(status) ? " checked" : ""}`}
             >
               <input
                 type="checkbox"

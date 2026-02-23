@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 type PageHeaderProps = {
   title: ReactNode;
@@ -6,7 +6,11 @@ type PageHeaderProps = {
   actions?: ReactNode;
 };
 
-export default function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
+export default function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: PageHeaderProps) {
   return (
     <div className="page-header">
       <div className="page-header-left">

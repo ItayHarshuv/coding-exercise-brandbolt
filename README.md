@@ -20,11 +20,11 @@ docker compose up --build
 
 This starts three services:
 
-| Service    | URL                     | Description                    |
-|------------|-------------------------|--------------------------------|
-| Frontend   | http://localhost:5173   | React + Vite dev server (HMR) |
-| Backend    | http://localhost:3000   | Express API server             |
-| PostgreSQL | localhost:5432          | Database (auto-initialized)    |
+| Service    | URL                   | Description                   |
+| ---------- | --------------------- | ----------------------------- |
+| Frontend   | http://localhost:5173 | React + Vite dev server (HMR) |
+| Backend    | http://localhost:3000 | Express API server            |
+| PostgreSQL | localhost:5432        | Database (auto-initialized)   |
 
 The backend automatically connects to PostgreSQL, synchronizes the schema, and seeds sample data (5 customers, 10 products, 20 orders).
 
@@ -50,14 +50,14 @@ Implement the route handlers in `backend/src/routes/`. Each file has detailed JS
 
 #### Orders API (`routes/orders.ts`)
 
-| Method | Endpoint                    | Description                                    |
-|--------|-----------------------------|------------------------------------------------|
-| GET    | `/api/orders`               | List orders with filters, sorting, pagination  |
-| POST   | `/api/orders`               | Create a new order with line items             |
-| GET    | `/api/orders/:id`           | Get order with all relations                   |
-| PATCH  | `/api/orders/:id`           | Update order fields (notes, status)            |
-| PATCH  | `/api/orders/:id/status`    | Status transition with validation              |
-| POST   | `/api/orders/bulk-status`   | Bulk update status for multiple orders         |
+| Method | Endpoint                  | Description                                   |
+| ------ | ------------------------- | --------------------------------------------- |
+| GET    | `/api/orders`             | List orders with filters, sorting, pagination |
+| POST   | `/api/orders`             | Create a new order with line items            |
+| GET    | `/api/orders/:id`         | Get order with all relations                  |
+| PATCH  | `/api/orders/:id`         | Update order fields (notes, status)           |
+| PATCH  | `/api/orders/:id/status`  | Status transition with validation             |
+| POST   | `/api/orders/bulk-status` | Bulk update status for multiple orders        |
 
 **Status transitions must follow this state machine:**
 
@@ -72,21 +72,21 @@ CANCELLED → (terminal)
 
 #### Webhooks API (`routes/webhooks.ts`)
 
-| Method | Endpoint                            | Description                  |
-|--------|-------------------------------------|------------------------------|
-| GET    | `/api/webhooks`                     | List subscriptions           |
-| POST   | `/api/webhooks`                     | Create subscription          |
-| PUT    | `/api/webhooks/:id`                 | Update subscription          |
-| DELETE | `/api/webhooks/:id`                 | Delete subscription          |
-| GET    | `/api/webhooks/:id/deliveries`      | Delivery log for subscription|
-| POST   | `/api/webhooks/:id/test`            | Send test payload            |
-| POST   | `/api/webhooks/deliveries/:id/retry`| Retry a failed delivery      |
+| Method | Endpoint                             | Description                   |
+| ------ | ------------------------------------ | ----------------------------- |
+| GET    | `/api/webhooks`                      | List subscriptions            |
+| POST   | `/api/webhooks`                      | Create subscription           |
+| PUT    | `/api/webhooks/:id`                  | Update subscription           |
+| DELETE | `/api/webhooks/:id`                  | Delete subscription           |
+| GET    | `/api/webhooks/:id/deliveries`       | Delivery log for subscription |
+| POST   | `/api/webhooks/:id/test`             | Send test payload             |
+| POST   | `/api/webhooks/deliveries/:id/retry` | Retry a failed delivery       |
 
 #### Dashboard API (`routes/dashboard.ts`)
 
-| Method | Endpoint               | Description                                      |
-|--------|------------------------|--------------------------------------------------|
-| GET    | `/api/dashboard/stats` | Status counts, total revenue, 10 recent orders   |
+| Method | Endpoint               | Description                                    |
+| ------ | ---------------------- | ---------------------------------------------- |
+| GET    | `/api/dashboard/stats` | Status counts, total revenue, 10 recent orders |
 
 #### Webhook Service (`services/webhook.service.ts`)
 
@@ -99,6 +99,7 @@ Implement `triggerWebhooks()` and `retryWebhookDelivery()`. The function signatu
 Implement the page components in `frontend/src/pages/`. Each file has detailed JSDoc comments describing the expected UI and behavior. Create any additional components you need in `frontend/src/components/`.
 
 #### Orders Page (`pages/OrdersPage.tsx`)
+
 - Data table with ID, customer, status badge, total, date
 - Multi-select status filter
 - Debounced text search on customer name
@@ -109,6 +110,7 @@ Implement the page components in `frontend/src/pages/`. Each file has detailed J
 - Order creation form with dynamic line items
 
 #### Order Detail Page (`pages/OrderDetailPage.tsx`)
+
 - Full order info with customer details and line items table
 - Status change dropdown (only valid transitions) with confirmation modal
 - Status timeline visualization
@@ -116,6 +118,7 @@ Implement the page components in `frontend/src/pages/`. Each file has detailed J
 - Unsaved changes warning on navigation
 
 #### Webhooks Page (`pages/WebhooksPage.tsx`)
+
 - Subscription list with active/inactive toggle
 - Create/edit subscription form with event type checkboxes
 - Expandable delivery log per subscription (paginated)
@@ -124,6 +127,7 @@ Implement the page components in `frontend/src/pages/`. Each file has detailed J
 - Auto-refresh toggle for delivery logs
 
 #### Dashboard Page (`pages/DashboardPage.tsx`)
+
 - Status breakdown cards (color-coded, count per status)
 - Total revenue display
 - Recent orders list (last 10, clickable rows)
@@ -136,6 +140,7 @@ Implement the page components in `frontend/src/pages/`. Each file has detailed J
 No UI component library is provided. A minimal CSS reset and design tokens (colors, spacing, typography) are in `frontend/src/index.css`. You are expected to style the application yourself.
 
 **Design and UX quality matters.** We evaluate:
+
 - Visual hierarchy and layout
 - Consistent use of color, spacing, and typography
 - Interactive states (hover, focus, loading, disabled)

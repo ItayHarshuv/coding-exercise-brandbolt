@@ -1,6 +1,6 @@
-import { FormEvent } from 'react';
-import Combobox, { ComboboxOption } from './Combobox';
-import { Product } from '../types';
+import { FormEvent } from "react";
+import Combobox, { ComboboxOption } from "./Combobox";
+import { Product } from "../types";
 
 type OrderCreateLine = { productId: number | null; quantity: number };
 
@@ -52,7 +52,12 @@ export default function CreateOrderModal({
       <div className="modal" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Create Order</h2>
-          <button className="btn btn-ghost btn-sm" type="button" onClick={onClose} disabled={createLoading}>
+          <button
+            className="btn btn-ghost btn-sm"
+            type="button"
+            onClick={onClose}
+            disabled={createLoading}
+          >
             &#10005;
           </button>
         </div>
@@ -74,8 +79,12 @@ export default function CreateOrderModal({
             <div className="form-group">
               <label className="form-label">Items</label>
               {newOrderItems.map((item, index) => {
-                const selectedProduct = products.find((product) => product.id === item.productId);
-                const lineTotal = selectedProduct ? selectedProduct.price * item.quantity : 0;
+                const selectedProduct = products.find(
+                  (product) => product.id === item.productId,
+                );
+                const lineTotal = selectedProduct
+                  ? selectedProduct.price * item.quantity
+                  : 0;
                 return (
                   <div key={index} className="line-item-row">
                     <Combobox
@@ -93,7 +102,9 @@ export default function CreateOrderModal({
                       min={1}
                       step={1}
                       value={item.quantity}
-                      onChange={(event) => onItemQuantityChange(index, event.target.value)}
+                      onChange={(event) =>
+                        onItemQuantityChange(index, event.target.value)
+                      }
                     />
                     <span className="line-total">${lineTotal.toFixed(2)}</span>
                     <button
@@ -107,12 +118,18 @@ export default function CreateOrderModal({
                   </div>
                 );
               })}
-              <button className="btn btn-ghost btn-sm mt-sm" type="button" onClick={onAddItem}>
+              <button
+                className="btn btn-ghost btn-sm mt-sm"
+                type="button"
+                onClick={onAddItem}
+              >
                 + Add Item
               </button>
               <div className="running-total">
                 <span className="running-total-label">Total:</span>
-                <span className="running-total-value">${runningTotal.toFixed(2)}</span>
+                <span className="running-total-value">
+                  ${runningTotal.toFixed(2)}
+                </span>
               </div>
             </div>
 
@@ -129,11 +146,20 @@ export default function CreateOrderModal({
           </div>
 
           <div className="modal-footer">
-            <button className="btn btn-secondary" type="button" onClick={onClose} disabled={createLoading}>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={onClose}
+              disabled={createLoading}
+            >
               Cancel
             </button>
-            <button className="btn btn-primary" type="submit" disabled={createLoading}>
-              {createLoading ? 'Creating...' : 'Create Order'}
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={createLoading}
+            >
+              {createLoading ? "Creating..." : "Create Order"}
             </button>
           </div>
         </form>

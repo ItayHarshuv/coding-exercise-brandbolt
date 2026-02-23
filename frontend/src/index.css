@@ -1,9 +1,9 @@
 /* Responsible for composing all global style subjects into a stable load order. */
-@import './styles/theme.css';
-@import './styles/layout.css';
-@import './styles/ui-primitives.css';
-@import './styles/forms-and-inputs.css';
-@import './styles/orders.css';
-@import './styles/webhooks.css';
-@import './styles/utilities.css';
-@import './styles/responsive.css';
+@import "./styles/theme.css";
+@import "./styles/layout.css";
+@import "./styles/ui-primitives.css";
+@import "./styles/forms-and-inputs.css";
+@import "./styles/orders.css";
+@import "./styles/webhooks.css";
+@import "./styles/utilities.css";
+@import "./styles/responsive.css";

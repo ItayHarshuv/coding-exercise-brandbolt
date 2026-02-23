@@ -41,23 +41,27 @@
  * - When enabled, polls delivery logs every few seconds
  */
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-import api from '../api/client';
-import PageHeader from '../components/PageHeader';
-import PageRefreshControls from '../components/PageRefreshControls';
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import api from "../api/client";
+import PageHeader from "../components/PageHeader";
+import PageRefreshControls from "../components/PageRefreshControls";
 import WebhookSubscriptionFormModal, {
   WebhookFormState,
-} from '../components/WebhookSubscriptionFormModal';
-import WebhookSubscriptionsList from '../components/WebhookSubscriptionsList';
-import WebhookTestResultModal from '../components/WebhookTestResultModal';
-import { PaginatedResponse, WebhookDelivery, WebhookSubscription } from '../types';
+} from "../components/WebhookSubscriptionFormModal";
+import WebhookSubscriptionsList from "../components/WebhookSubscriptionsList";
+import WebhookTestResultModal from "../components/WebhookTestResultModal";
+import {
+  PaginatedResponse,
+  WebhookDelivery,
+  WebhookSubscription,
+} from "../types";
 
 const EVENT_OPTIONS = [
-  'order.status.CONFIRMED',
-  'order.status.PROCESSING',
-  'order.status.SHIPPED',
-  'order.status.DELIVERED',
-  'order.status.CANCELLED',
+  "order.status.CONFIRMED",
+  "order.status.PROCESSING",
+  "order.status.SHIPPED",
+  "order.status.DELIVERED",
+  "order.status.CANCELLED",
 ];
 const REFRESH_OPTIONS = [5, 10, 30];
 
@@ -70,33 +74,47 @@ export default function WebhooksPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<WebhookSubscription | null>(null);
   const [form, setForm] = useState<WebhookFormState>({
-    url: '',
-    secret: '',
+    url: "",
+    secret: "",
     events: [],
     isActive: true,
   });
   const [saving, setSaving] = useState(false);
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-  const [deliveryData, setDeliveryData] = useState<Record<number, PaginatedResponse<WebhookDelivery>>>({});
-  const [deliveryLoadingIds, setDeliveryLoadingIds] = useState<Set<number>>(new Set());
-  const [deliveryPageBySubscription, setDeliveryPageBySubscription] = useState<Record<number, number>>({});
+  const [deliveryData, setDeliveryData] = useState<
+    Record<number, PaginatedResponse<WebhookDelivery>>
+  >({});
+  const [deliveryLoadingIds, setDeliveryLoadingIds] = useState<Set<number>>(
+    new Set(),
+  );
+  const [deliveryPageBySubscription, setDeliveryPageBySubscription] = useState<
+    Record<number, number>
+  >({});
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(10);
   const [testResult, setTestResult] = useState<WebhookDelivery | null>(null);
-  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error" | "info";
+    text: string;
+  } | null>(null);
 
-  const formTitle = useMemo(() => (editing ? 'Edit Subscription' : 'Add Subscription'), [editing]);
+  const formTitle = useMemo(
+    () => (editing ? "Edit Subscription" : "Add Subscription"),
+    [editing],
+  );
 
   const loadSubscriptions = async (initial = false) => {
     if (initial) setLoading(true);
     else setRefreshing(true);
     setError(null);
     try {
-      const response = await api.get<WebhookSubscription[]>('/webhooks');
+      const response = await api.get<WebhookSubscription[]>("/webhooks");
       setSubscriptions(response.data);
     } catch (requestError: any) {
-      setError(requestError?.response?.data?.error || 'Failed to load subscriptions');
+      setError(
+        requestError?.response?.data?.error || "Failed to load subscriptions",
+      );
     } finally {
       if (initial) setLoading(false);
       else setRefreshing(false);
@@ -112,12 +130,22 @@ export default function WebhooksPage() {
     try {
       const response = await api.get<PaginatedResponse<WebhookDelivery>>(
         `/webhooks/${subscriptionId}/deliveries`,
-        { params: { page, pageSize: 10 } }
+        { params: { page, pageSize: 10 } },
       );
-      setDeliveryData((previous) => ({ ...previous, [subscriptionId]: response.data }));
-      setDeliveryPageBySubscription((previous) => ({ ...previous, [subscriptionId]: page }));
+      setDeliveryData((previous) => ({
+        ...previous,
+        [subscriptionId]: response.data,
+      }));
+      setDeliveryPageBySubscription((previous) => ({
+        ...previous,
+        [subscriptionId]: page,
+      }));
     } catch (requestError: any) {
-      setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to load deliveries' });
+      setMessage({
+        type: "error",
+        text:
+          requestError?.response?.data?.error || "Failed to load deliveries",
+      });
     } finally {
       setDeliveryLoadingIds((previous) => {
         const next = new Set(previous);
@@ -141,7 +169,7 @@ export default function WebhooksPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ url: '', secret: '', events: [], isActive: true });
+    setForm({ url: "", secret: "", events: [], isActive: true });
     setIsFormOpen(true);
   };
 
@@ -163,15 +191,19 @@ export default function WebhooksPage() {
     try {
       if (editing) {
         await api.put(`/webhooks/${editing.id}`, form);
-        setMessage({ type: 'success', text: 'Subscription updated' });
+        setMessage({ type: "success", text: "Subscription updated" });
       } else {
-        await api.post('/webhooks', form);
-        setMessage({ type: 'success', text: 'Subscription created' });
+        await api.post("/webhooks", form);
+        setMessage({ type: "success", text: "Subscription created" });
       }
       setIsFormOpen(false);
       await loadSubscriptions(false);
     } catch (requestError: any) {
-      setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to save subscription' });
+      setMessage({
+        type: "error",
+        text:
+          requestError?.response?.data?.error || "Failed to save subscription",
+      });
     } finally {
       setSaving(false);
     }
@@ -180,10 +212,17 @@ export default function WebhooksPage() {
   const toggleActive = async (subscription: WebhookSubscription) => {
     setMessage(null);
     try {
-      await api.put(`/webhooks/${subscription.id}`, { isActive: !subscription.isActive });
+      await api.put(`/webhooks/${subscription.id}`, {
+        isActive: !subscription.isActive,
+      });
       await loadSubscriptions(false);
     } catch (requestError: any) {
-      setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to update subscription' });
+      setMessage({
+        type: "error",
+        text:
+          requestError?.response?.data?.error ||
+          "Failed to update subscription",
+      });
     }
   };
 
@@ -194,7 +233,12 @@ export default function WebhooksPage() {
       await api.delete(`/webhooks/${subscription.id}`);
       await loadSubscriptions(false);
     } catch (requestError: any) {
-      setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to delete subscription' });
+      setMessage({
+        type: "error",
+        text:
+          requestError?.response?.data?.error ||
+          "Failed to delete subscription",
+      });
     }
   };
 
@@ -205,7 +249,10 @@ export default function WebhooksPage() {
         next.delete(subscriptionId);
       } else {
         next.add(subscriptionId);
-        void loadDeliveries(subscriptionId, deliveryPageBySubscription[subscriptionId] || 1);
+        void loadDeliveries(
+          subscriptionId,
+          deliveryPageBySubscription[subscriptionId] || 1,
+        );
       }
       return next;
     });
@@ -214,14 +261,20 @@ export default function WebhooksPage() {
   const sendTest = async (subscriptionId: number) => {
     setMessage(null);
     try {
-      const response = await api.post<WebhookDelivery>(`/webhooks/${subscriptionId}/test`);
+      const response = await api.post<WebhookDelivery>(
+        `/webhooks/${subscriptionId}/test`,
+      );
       setTestResult(response.data);
       if (expandedIds.has(subscriptionId)) {
         const page = deliveryPageBySubscription[subscriptionId] || 1;
         await loadDeliveries(subscriptionId, page);
       }
     } catch (requestError: any) {
-      setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to send test webhook' });
+      setMessage({
+        type: "error",
+        text:
+          requestError?.response?.data?.error || "Failed to send test webhook",
+      });
     }
   };
 
@@ -232,7 +285,10 @@ export default function WebhooksPage() {
       const page = deliveryPageBySubscription[subscriptionId] || 1;
       await loadDeliveries(subscriptionId, page);
     } catch (requestError: any) {
-      setMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to retry delivery' });
+      setMessage({
+        type: "error",
+        text: requestError?.response?.data?.error || "Failed to retry delivery",
+      });
     }
   };
 
@@ -253,7 +309,11 @@ export default function WebhooksPage() {
               onRefresh={() => void loadSubscriptions(false)}
               refreshDisabled={refreshing}
             />
-            <button className="btn btn-primary" type="button" onClick={openCreate}>
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={openCreate}
+            >
               + Add Subscription
             </button>
           </>
@@ -277,8 +337,12 @@ export default function WebhooksPage() {
         onDelete={(subscription) => void deleteSubscription(subscription)}
         onSendTest={(subscriptionId) => void sendTest(subscriptionId)}
         onToggleExpanded={toggleExpanded}
-        onRetryDelivery={(subscriptionId, deliveryId) => void retryDelivery(subscriptionId, deliveryId)}
-        onLoadDeliveriesPage={(subscriptionId, page) => void loadDeliveries(subscriptionId, page)}
+        onRetryDelivery={(subscriptionId, deliveryId) =>
+          void retryDelivery(subscriptionId, deliveryId)
+        }
+        onLoadDeliveriesPage={(subscriptionId, page) =>
+          void loadDeliveries(subscriptionId, page)
+        }
       />
 
       <WebhookSubscriptionFormModal

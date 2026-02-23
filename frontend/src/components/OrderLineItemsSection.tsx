@@ -1,15 +1,21 @@
-import { OrderItem } from '../types';
+import { OrderItem } from "../types";
 
 type OrderLineItemsSectionProps = {
   items: OrderItem[];
   subtotal: number;
 };
 
-export default function OrderLineItemsSection({ items, subtotal }: OrderLineItemsSectionProps) {
+export default function OrderLineItemsSection({
+  items,
+  subtotal,
+}: OrderLineItemsSectionProps) {
   return (
     <div className="detail-section">
       <div className="detail-section-title">Line Items</div>
-      <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+      <div
+        className="table-wrapper"
+        style={{ border: "none", borderRadius: 0 }}
+      >
         <table className="table">
           <thead>
             <tr>
@@ -23,11 +29,23 @@ export default function OrderLineItemsSection({ items, subtotal }: OrderLineItem
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
-                <td className="font-semibold" style={{ color: 'var(--color-text)' }}>{item.product.name}</td>
-                <td><span className="text-mono text-xs">{item.product.sku}</span></td>
+                <td
+                  className="font-semibold"
+                  style={{ color: "var(--color-text)" }}
+                >
+                  {item.product.name}
+                </td>
+                <td>
+                  <span className="text-mono text-xs">{item.product.sku}</span>
+                </td>
                 <td>${Number(item.unitPrice).toFixed(2)}</td>
                 <td>{item.quantity}</td>
-                <td className="font-semibold" style={{ color: 'var(--color-text)' }}>${Number(item.lineTotal).toFixed(2)}</td>
+                <td
+                  className="font-semibold"
+                  style={{ color: "var(--color-text)" }}
+                >
+                  ${Number(item.lineTotal).toFixed(2)}
+                </td>
               </tr>
             ))}
             <tr className="table-subtotal">

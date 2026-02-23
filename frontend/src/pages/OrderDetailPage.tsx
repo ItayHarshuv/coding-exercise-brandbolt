@@ -47,19 +47,19 @@
  * - Back button/link to return to orders list
  */
 
-import { useParams } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../api/client';
-import OrderCustomerSection from '../components/OrderCustomerSection';
-import OrderInfoSection from '../components/OrderInfoSection';
-import OrderLineItemsSection from '../components/OrderLineItemsSection';
-import OrderNotesSection from '../components/OrderNotesSection';
-import OrderStatusChangeSelect from '../components/OrderStatusChangeSelect';
-import OrderStatusTimeline from '../components/OrderStatusTimeline';
-import PageHeader from '../components/PageHeader';
-import StatusChangeConfirmModal from '../components/StatusChangeConfirmModal';
-import { Order, OrderStatus, STATUS_CLASS_MAP } from '../types';
+import { useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import api from "../api/client";
+import OrderCustomerSection from "../components/OrderCustomerSection";
+import OrderInfoSection from "../components/OrderInfoSection";
+import OrderLineItemsSection from "../components/OrderLineItemsSection";
+import OrderNotesSection from "../components/OrderNotesSection";
+import OrderStatusChangeSelect from "../components/OrderStatusChangeSelect";
+import OrderStatusTimeline from "../components/OrderStatusTimeline";
+import PageHeader from "../components/PageHeader";
+import StatusChangeConfirmModal from "../components/StatusChangeConfirmModal";
+import { Order, OrderStatus, STATUS_CLASS_MAP } from "../types";
 
 const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
@@ -75,15 +75,19 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [actionMessage, setActionMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [notesDraft, setNotesDraft] = useState('');
+  const [notesDraft, setNotesDraft] = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const unsavedChanges = isEditing && order && notesDraft !== (order.notes ?? '');
+  const unsavedChanges =
+    isEditing && order && notesDraft !== (order.notes ?? "");
 
   const availableTransitions = useMemo(() => {
     if (!order) return [] as OrderStatus[];
@@ -97,12 +101,12 @@ export default function OrderDetailPage() {
     try {
       const response = await api.get<Order>(`/orders/${id}`);
       setOrder(response.data);
-      setNotesDraft(response.data.notes ?? '');
+      setNotesDraft(response.data.notes ?? "");
     } catch (requestError: any) {
       if (requestError?.response?.status === 404) {
-        setError('Order not found');
+        setError("Order not found");
       } else {
-        setError(requestError?.response?.data?.error || 'Failed to load order');
+        setError(requestError?.response?.data?.error || "Failed to load order");
       }
     } finally {
       setLoading(false);
@@ -119,8 +123,8 @@ export default function OrderDetailPage() {
       if (!unsavedChanges) return;
       event.preventDefault();
     };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [unsavedChanges]);
 
   const handleStatusChange = async (nextStatus: OrderStatus) => {
@@ -129,11 +133,19 @@ export default function OrderDetailPage() {
     setStatusLoading(true);
     setActionMessage(null);
     try {
-      const response = await api.patch<Order>(`/orders/${order.id}/status`, { status: nextStatus });
+      const response = await api.patch<Order>(`/orders/${order.id}/status`, {
+        status: nextStatus,
+      });
       setOrder(response.data);
-      setActionMessage({ type: 'success', text: `Status updated to ${nextStatus}` });
+      setActionMessage({
+        type: "success",
+        text: `Status updated to ${nextStatus}`,
+      });
     } catch (requestError: any) {
-      setActionMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to update status' });
+      setActionMessage({
+        type: "error",
+        text: requestError?.response?.data?.error || "Failed to update status",
+      });
     } finally {
       setPendingStatus(null);
       setIsStatusConfirmOpen(false);
@@ -146,12 +158,17 @@ export default function OrderDetailPage() {
     setSaveLoading(true);
     setActionMessage(null);
     try {
-      const response = await api.patch<Order>(`/orders/${order.id}`, { notes: notesDraft });
+      const response = await api.patch<Order>(`/orders/${order.id}`, {
+        notes: notesDraft,
+      });
       setOrder(response.data);
       setIsEditing(false);
-      setActionMessage({ type: 'success', text: 'Order updated' });
+      setActionMessage({ type: "success", text: "Order updated" });
     } catch (requestError: any) {
-      setActionMessage({ type: 'error', text: requestError?.response?.data?.error || 'Failed to save notes' });
+      setActionMessage({
+        type: "error",
+        text: requestError?.response?.data?.error || "Failed to save notes",
+      });
     } finally {
       setSaveLoading(false);
     }
@@ -173,8 +190,10 @@ export default function OrderDetailPage() {
     return (
       <div>
         <PageHeader title={`Order #${id}`} />
-        <div className="alert alert-error">{error || 'Order not found'}</div>
-        <Link to="/orders" className="detail-back">&larr; Back to Orders</Link>
+        <div className="alert alert-error">{error || "Order not found"}</div>
+        <Link to="/orders" className="detail-back">
+          &larr; Back to Orders
+        </Link>
       </div>
     );
   }
@@ -186,7 +205,9 @@ export default function OrderDetailPage() {
         className="detail-back"
         onClick={(event) => {
           if (!unsavedChanges) return;
-          const proceed = window.confirm('You have unsaved changes. Leave this page?');
+          const proceed = window.confirm(
+            "You have unsaved changes. Leave this page?",
+          );
           if (!proceed) event.preventDefault();
         }}
       >
@@ -198,7 +219,9 @@ export default function OrderDetailPage() {
           <>
             Order #{order.id}
             <span style={{ marginLeft: 12 }}>
-              <span className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}>{order.status}</span>
+              <span className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}>
+                {order.status}
+              </span>
             </span>
           </>
         }
@@ -216,7 +239,9 @@ export default function OrderDetailPage() {
       />
 
       {actionMessage && (
-        <div className={`alert ${actionMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+        <div
+          className={`alert ${actionMessage.type === "success" ? "alert-success" : "alert-error"}`}
+        >
           {actionMessage.text}
         </div>
       )}
@@ -228,11 +253,14 @@ export default function OrderDetailPage() {
           setIsStatusConfirmOpen(false);
           setPendingStatus(null);
         }}
-        onConfirm={() => (pendingStatus ? handleStatusChange(pendingStatus) : undefined)}
+        onConfirm={() =>
+          pendingStatus ? handleStatusChange(pendingStatus) : undefined
+        }
         loading={statusLoading}
       >
         <p className="text-secondary">
-          Change order status from <span className="font-bold">{order.status}</span> to{' '}
+          Change order status from{" "}
+          <span className="font-bold">{order.status}</span> to{" "}
           <span className="font-bold">{pendingStatus}</span>?
         </p>
       </StatusChangeConfirmModal>
@@ -262,7 +290,7 @@ export default function OrderDetailPage() {
         onNotesChange={setNotesDraft}
         onSave={() => void handleSaveNotes()}
         onCancel={() => {
-          setNotesDraft(order.notes ?? '');
+          setNotesDraft(order.notes ?? "");
           setIsEditing(false);
         }}
       />

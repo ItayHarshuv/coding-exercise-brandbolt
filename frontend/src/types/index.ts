@@ -2,21 +2,21 @@
 // Use them throughout the frontend for type safety.
 
 export enum OrderStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  PROCESSING = 'PROCESSING',
-  SHIPPED = 'SHIPPED',
-  DELIVERED = 'DELIVERED',
-  CANCELLED = 'CANCELLED',
+  PENDING = "PENDING",
+  CONFIRMED = "CONFIRMED",
+  PROCESSING = "PROCESSING",
+  SHIPPED = "SHIPPED",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
 }
 
 export const STATUS_CLASS_MAP: Record<OrderStatus, string> = {
-  [OrderStatus.PENDING]: 'pending',
-  [OrderStatus.CONFIRMED]: 'confirmed',
-  [OrderStatus.PROCESSING]: 'processing',
-  [OrderStatus.SHIPPED]: 'shipped',
-  [OrderStatus.DELIVERED]: 'delivered',
-  [OrderStatus.CANCELLED]: 'cancelled',
+  [OrderStatus.PENDING]: "pending",
+  [OrderStatus.CONFIRMED]: "confirmed",
+  [OrderStatus.PROCESSING]: "processing",
+  [OrderStatus.SHIPPED]: "shipped",
+  [OrderStatus.DELIVERED]: "delivered",
+  [OrderStatus.CANCELLED]: "cancelled",
 };
 
 export interface Customer {

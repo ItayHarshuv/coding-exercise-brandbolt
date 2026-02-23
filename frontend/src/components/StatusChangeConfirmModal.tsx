@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 type StatusChangeConfirmModalProps = {
   isOpen: boolean;
@@ -15,7 +15,7 @@ export default function StatusChangeConfirmModal({
   title,
   onClose,
   onConfirm,
-  confirmLabel = 'Confirm',
+  confirmLabel = "Confirm",
   loading = false,
   children,
 }: StatusChangeConfirmModalProps) {
@@ -26,17 +26,32 @@ export default function StatusChangeConfirmModal({
       <div className="modal" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
-          <button className="btn btn-ghost btn-sm" type="button" onClick={onClose} disabled={loading}>
+          <button
+            className="btn btn-ghost btn-sm"
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+          >
             &#10005;
           </button>
         </div>
         <div className="modal-body">{children}</div>
         <div className="modal-footer">
-          <button className="btn btn-secondary" type="button" onClick={onClose} disabled={loading}>
+          <button
+            className="btn btn-secondary"
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+          >
             Cancel
           </button>
-          <button className="btn btn-accent" type="button" onClick={() => void onConfirm()} disabled={loading}>
-            {loading ? 'Updating...' : confirmLabel}
+          <button
+            className="btn btn-accent"
+            type="button"
+            onClick={() => void onConfirm()}
+            disabled={loading}
+          >
+            {loading ? "Updating..." : confirmLabel}
           </button>
         </div>
       </div>

@@ -1,7 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { WebhookDelivery } from './WebhookDelivery';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { WebhookDelivery } from "./WebhookDelivery";
 
-@Entity('webhook_subscriptions')
+@Entity("webhook_subscriptions")
 export class WebhookSubscription {
   @PrimaryGeneratedColumn()
   id: number;
@@ -12,7 +18,7 @@ export class WebhookSubscription {
   @Column()
   secret: string;
 
-  @Column('simple-array')
+  @Column("simple-array")
   events: string[];
 
   @Column({ default: true })

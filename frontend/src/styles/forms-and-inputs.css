@@ -216,7 +216,9 @@
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .combobox-option:hover:not(:disabled) {
@@ -265,7 +267,7 @@
 }
 
 .toggle-track::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 2px;
   left: 2px;

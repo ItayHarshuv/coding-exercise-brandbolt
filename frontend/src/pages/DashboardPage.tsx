@@ -28,14 +28,14 @@
  * - On subsequent refreshes, show subtle loading indicator without replacing content
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/client';
-import PageRefreshControls from '../components/PageRefreshControls';
-import PageHeader from '../components/PageHeader';
-import RecentOrdersTable from '../components/RecentOrdersTable';
-import StatCard from '../components/StatCard';
-import { DashboardStats, OrderStatus, STATUS_CLASS_MAP } from '../types';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../api/client";
+import PageRefreshControls from "../components/PageRefreshControls";
+import PageHeader from "../components/PageHeader";
+import RecentOrdersTable from "../components/RecentOrdersTable";
+import StatCard from "../components/StatCard";
+import { DashboardStats, OrderStatus, STATUS_CLASS_MAP } from "../types";
 
 const REFRESH_OPTIONS = [5, 10, 30];
 
@@ -53,10 +53,12 @@ export default function DashboardPage() {
     else setRefreshing(true);
     setError(null);
     try {
-      const response = await api.get<DashboardStats>('/dashboard/stats');
+      const response = await api.get<DashboardStats>("/dashboard/stats");
       setStats(response.data);
     } catch (requestError: any) {
-      setError(requestError?.response?.data?.error || 'Failed to load dashboard stats');
+      setError(
+        requestError?.response?.data?.error || "Failed to load dashboard stats",
+      );
     } finally {
       if (initial) setLoading(false);
       else setRefreshing(false);
@@ -76,7 +78,10 @@ export default function DashboardPage() {
   }, [autoRefresh, refreshInterval]);
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value));
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(Number(value));
 
   const statusOrder = Object.values(OrderStatus);
 
@@ -106,13 +111,28 @@ export default function DashboardPage() {
         </div>
       )}
       {error && <div className="alert alert-error">{error}</div>}
-      
+
       {!loading && stats && (
         <>
-          <div className="card-grid card-grid-4 mb-lg" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-            <StatCard label="Total Revenue" value={formatCurrency(stats.totalRevenue)} variant="revenue" valueClassName="revenue" />
+          <div
+            className="card-grid card-grid-4 mb-lg"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            }}
+          >
+            <StatCard
+              label="Total Revenue"
+              value={formatCurrency(stats.totalRevenue)}
+              variant="revenue"
+              valueClassName="revenue"
+            />
             {statusOrder.map((status) => (
-              <StatCard key={status} label={status} value={stats.statusCounts[status] ?? 0} variant={STATUS_CLASS_MAP[status]} />
+              <StatCard
+                key={status}
+                label={status}
+                value={stats.statusCounts[status] ?? 0}
+                variant={STATUS_CLASS_MAP[status]}
+              />
             ))}
           </div>
 

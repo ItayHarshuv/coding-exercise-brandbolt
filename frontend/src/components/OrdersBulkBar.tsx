@@ -1,11 +1,11 @@
-import { OrderStatus } from '../types';
+import { OrderStatus } from "../types";
 
 type OrdersBulkBarProps = {
   selectedCount: number;
-  bulkStatus: OrderStatus | '';
+  bulkStatus: OrderStatus | "";
   statusOptions: OrderStatus[];
   bulkLoading: boolean;
-  onBulkStatusChange: (status: OrderStatus | '') => void;
+  onBulkStatusChange: (status: OrderStatus | "") => void;
   onBulkUpdate: () => void;
 };
 
@@ -26,7 +26,9 @@ export default function OrdersBulkBar({
       <select
         className="form-select"
         value={bulkStatus}
-        onChange={(event) => onBulkStatusChange(event.target.value as OrderStatus | '')}
+        onChange={(event) =>
+          onBulkStatusChange(event.target.value as OrderStatus | "")
+        }
       >
         <option value="">Select status</option>
         {statusOptions.map((status) => (
@@ -41,7 +43,7 @@ export default function OrdersBulkBar({
         disabled={!bulkStatus || bulkLoading}
         onClick={onBulkUpdate}
       >
-        {bulkLoading ? 'Updating...' : 'Update Status'}
+        {bulkLoading ? "Updating..." : "Update Status"}
       </button>
     </div>
   );

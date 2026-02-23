@@ -1,6 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from "typeorm";
 
-@Entity('products')
+@Entity("products")
 export class Product {
   @PrimaryGeneratedColumn()
   id: number;
@@ -11,7 +16,7 @@ export class Product {
   @Column({ unique: true })
   sku: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column("decimal", { precision: 10, scale: 2 })
   price: number;
 
   @Column({ default: 0 })

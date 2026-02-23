@@ -1,4 +1,4 @@
-import { FormEvent } from 'react';
+import { FormEvent } from "react";
 
 export type WebhookFormState = {
   url: string;
@@ -35,7 +35,12 @@ export default function WebhookSubscriptionFormModal({
       <div className="modal" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
-          <button className="btn btn-ghost btn-sm" type="button" onClick={onClose} disabled={saving}>
+          <button
+            className="btn btn-ghost btn-sm"
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+          >
             &#10005;
           </button>
         </div>
@@ -47,7 +52,9 @@ export default function WebhookSubscriptionFormModal({
                 className="form-input"
                 type="url"
                 value={form.url}
-                onChange={(event) => onFormChange({ ...form, url: event.target.value })}
+                onChange={(event) =>
+                  onFormChange({ ...form, url: event.target.value })
+                }
                 placeholder="https://example.com/webhook"
                 required
               />
@@ -57,7 +64,9 @@ export default function WebhookSubscriptionFormModal({
               <input
                 className="form-input"
                 value={form.secret}
-                onChange={(event) => onFormChange({ ...form, secret: event.target.value })}
+                onChange={(event) =>
+                  onFormChange({ ...form, secret: event.target.value })
+                }
                 placeholder="Webhook signing secret"
                 required
               />
@@ -68,7 +77,7 @@ export default function WebhookSubscriptionFormModal({
                 {eventOptions.map((eventName) => (
                   <label
                     key={eventName}
-                    className={`form-checkbox-label${form.events.includes(eventName) ? ' checked' : ''}`}
+                    className={`form-checkbox-label${form.events.includes(eventName) ? " checked" : ""}`}
                   >
                     <input
                       type="checkbox"
@@ -78,7 +87,9 @@ export default function WebhookSubscriptionFormModal({
                           ...form,
                           events: event.target.checked
                             ? [...form.events, eventName]
-                            : form.events.filter((current) => current !== eventName),
+                            : form.events.filter(
+                                (current) => current !== eventName,
+                              ),
                         })
                       }
                     />
@@ -92,7 +103,9 @@ export default function WebhookSubscriptionFormModal({
                 <input
                   type="checkbox"
                   checked={form.isActive}
-                  onChange={(event) => onFormChange({ ...form, isActive: event.target.checked })}
+                  onChange={(event) =>
+                    onFormChange({ ...form, isActive: event.target.checked })
+                  }
                 />
                 <span className="toggle-track"></span>
                 Active
@@ -100,11 +113,16 @@ export default function WebhookSubscriptionFormModal({
             </div>
           </div>
           <div className="modal-footer">
-            <button className="btn btn-secondary" type="button" onClick={onClose} disabled={saving}>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+            >
               Cancel
             </button>
             <button className="btn btn-primary" type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
