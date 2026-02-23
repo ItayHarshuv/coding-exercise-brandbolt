@@ -56,7 +56,12 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
-import Combobox, { ComboboxOption } from '../components/Combobox';
+import { ComboboxOption } from '../components/Combobox';
+import CreateOrderModal from '../components/CreateOrderModal';
+import OrdersBulkBar from '../components/OrdersBulkBar';
+import OrdersFilterBar from '../components/OrdersFilterBar';
+import OrdersTable, { OrdersSortableColumn } from '../components/OrdersTable';
+import PageHeader from '../components/PageHeader';
 import StatusChangeConfirmModal from '../components/StatusChangeConfirmModal';
 import {
   BulkStatusResult,
@@ -66,21 +71,12 @@ import {
   OrderStatus,
   PaginatedResponse,
   Product,
+  STATUS_CLASS_MAP,
 } from '../types';
 
 const PAGE_SIZES = [10, 25, 50];
 const STATUS_OPTIONS = Object.values(OrderStatus);
 
-const STATUS_CLASS_MAP: Record<string, string> = {
-  [OrderStatus.PENDING]: 'pending',
-  [OrderStatus.CONFIRMED]: 'confirmed',
-  [OrderStatus.PROCESSING]: 'processing',
-  [OrderStatus.SHIPPED]: 'shipped',
-  [OrderStatus.DELIVERED]: 'delivered',
-  [OrderStatus.CANCELLED]: 'cancelled',
-};
-
-type SortableColumn = 'id' | 'status' | 'totalAmount' | 'createdAt';
 type OrderCreateLine = { productId: number | null; quantity: number};
 
 export default function OrdersPage() {
@@ -118,7 +114,7 @@ export default function OrdersPage() {
       .map((value) => value.trim())
       .filter((value): value is OrderStatus => STATUS_OPTIONS.includes(value as OrderStatus));
   }, [searchParams]);
-  const sortBy = (searchParams.get('sortBy') || 'createdAt') as SortableColumn;
+  const sortBy = (searchParams.get('sortBy') || 'createdAt') as OrdersSortableColumn;
   const sortDir = searchParams.get('sortDir') === 'ASC' ? 'ASC' : 'DESC';
   const page = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10) || 1);
   const pageSize = PAGE_SIZES.includes(Number(searchParams.get('pageSize')))
@@ -238,7 +234,7 @@ export default function OrdersPage() {
     });
   };
 
-  const handleSort = (column: SortableColumn) => {
+  const handleSort = (column: OrdersSortableColumn) => {
     if (sortBy === column) {
       updateParams({ sortDir: sortDir === 'ASC' ? 'DESC' : 'ASC', page: '1' });
     } else {
@@ -253,6 +249,15 @@ export default function OrdersPage() {
         if (checked) next.add(order.id);
         else next.delete(order.id);
       }
+      return next;
+    });
+  };
+
+  const toggleOrderSelected = (orderId: number, checked: boolean) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (checked) next.add(orderId);
+      else next.delete(orderId);
       return next;
     });
   };
@@ -349,77 +354,60 @@ export default function OrdersPage() {
 
   const allOnPageSelected = orders.length > 0 && orders.every((order) => selectedIds.has(order.id));
 
-  const sortIndicator = (col: SortableColumn) => {
-    if (sortBy !== col) return '';
-    return sortDir === 'ASC' ? ' \u2191' : ' \u2193';
+  const handleItemProductChange = (index: number, productId: number | null) => {
+    setNewOrderItems((previous) =>
+      previous.map((line, lineIndex) =>
+        lineIndex === index ? { ...line, productId } : line
+      )
+    );
+  };
+
+  const handleItemQuantityChange = (index: number, rawValue: string) => {
+    const quantity = Number.parseInt(rawValue, 10);
+    setNewOrderItems((previous) =>
+      previous.map((line, lineIndex) =>
+        lineIndex === index ? { ...line, quantity: Number.isNaN(quantity) ? 1 : quantity } : line
+      )
+    );
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setNewOrderItems((previous) => previous.filter((_, lineIndex) => lineIndex !== index));
+  };
+
+  const handleAddItem = () => {
+    setNewOrderItems((previous) => [...previous, { productId: null, quantity: 1 }]);
   };
 
   return (
     <div>
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1 className="page-title">Orders</h1>
-          <p className="page-subtitle">Manage and track all customer orders</p>
-        </div>
-        <div className="page-header-actions">
+      <PageHeader
+        title="Orders"
+        subtitle="Manage and track all customer orders"
+        actions={
           <button className="btn btn-primary" type="button" onClick={() => setIsCreateOpen(true)}>
             + New Order
           </button>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="filters-bar">
-        <div className="filters-row">
-          <input
-            className="form-input"
-            value={searchDraft}
-            onChange={(event) => setSearchDraft(event.target.value)}
-            placeholder="Search by customer name..."
-          />
-          <div className="form-checkbox-group">
-            {STATUS_OPTIONS.map((status) => (
-              <label
-                key={status}
-                className={`form-checkbox-label${statuses.includes(status) ? ' checked' : ''}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={statuses.includes(status)}
-                  onChange={() => toggleStatus(status)}
-                />
-                {status}
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
+      <OrdersFilterBar
+        searchDraft={searchDraft}
+        onSearchDraftChange={setSearchDraft}
+        statuses={statuses}
+        statusOptions={STATUS_OPTIONS}
+        onToggleStatus={toggleStatus}
+      />
 
-      {selectedIds.size > 0 && (
-        <div className="bulk-bar">
-          <span className="bulk-bar-count">{selectedIds.size}</span>
-          <span className="text-secondary">selected</span>
-          <select
-            className="form-select"
-            value={bulkStatus}
-            onChange={(event) => setBulkStatus(event.target.value as OrderStatus | '')}
-          >
-            <option value="">Select status</option>
-            {STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-          <button
-            className="btn btn-accent btn-sm"
-            type="button"
-            disabled={!bulkStatus || bulkLoading}
-            onClick={() => void handleBulkUpdate()}
-          >
-            {bulkLoading ? 'Updating...' : 'Update Status'}
-          </button>
-        </div>
-      )}
+      <OrdersBulkBar
+        selectedCount={selectedIds.size}
+        bulkStatus={bulkStatus}
+        statusOptions={STATUS_OPTIONS}
+        bulkLoading={bulkLoading}
+        onBulkStatusChange={setBulkStatus}
+        onBulkUpdate={handleBulkUpdate}
+      />
+      
       {bulkMessage && <div className="alert alert-info">{bulkMessage}</div>}
 
       {loadError && <div className="alert alert-error">{loadError}</div>}
@@ -437,263 +425,49 @@ export default function OrdersPage() {
         </p>
       </StatusChangeConfirmModal>
 
-      {loading ? (
-        <div className="loading-container">
-          <span className="spinner"></span>
-          Loading orders...
-        </div>
-      ) : (
-        <div className="table-wrapper">
-          <table className="table table-clickable">
-            <thead>
-              <tr>
-                <th style={{ width: 40 }}>
-                  <input
-                    type="checkbox"
-                    checked={allOnPageSelected}
-                    onChange={(event) => toggleSelectAllOnPage(event.target.checked)}
-                  />
-                </th>
-                <th>
-                  <button
-                    type="button"
-                    className={`sort-btn${sortBy === 'id' ? ' active' : ''}`}
-                    onClick={() => handleSort('id')}
-                  >
-                    ID{sortIndicator('id')}
-                  </button>
-                </th>
-                <th>Customer</th>
-                <th>
-                  <button
-                    type="button"
-                    className={`sort-btn${sortBy === 'status' ? ' active' : ''}`}
-                    onClick={() => handleSort('status')}
-                  >
-                    Status{sortIndicator('status')}
-                  </button>
-                </th>
-                <th>
-                  <button
-                    type="button"
-                    className={`sort-btn${sortBy === 'totalAmount' ? ' active' : ''}`}
-                    onClick={() => handleSort('totalAmount')}
-                  >
-                    Total{sortIndicator('totalAmount')}
-                  </button>
-                </th>
-                <th>
-                  <button
-                    type="button"
-                    className={`sort-btn${sortBy === 'createdAt' ? ' active' : ''}`}
-                    onClick={() => handleSort('createdAt')}
-                  >
-                    Date{sortIndicator('createdAt')}
-                  </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)}>
-                  <td onClick={(event) => event.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(order.id)}
-                      onChange={(event) => {
-                        setSelectedIds((previous) => {
-                          const next = new Set(previous);
-                          if (event.target.checked) next.add(order.id);
-                          else next.delete(order.id);
-                          return next;
-                        });
-                      }}
-                    />
-                  </td>
-                  <td className="font-semibold">#{order.id}</td>
-                  <td>{order.customer.name}</td>
-                  <td>
-                    <span className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="font-semibold">${Number(order.totalAmount).toFixed(2)}</td>
-                  <td className="text-muted">{new Date(order.createdAt).toLocaleString()}</td>
-                </tr>
-              ))}
-              {orders.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="table-empty">No orders found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <OrdersTable
+        loading={loading}
+        orders={orders}
+        selectedIds={selectedIds}
+        allOnPageSelected={allOnPageSelected}
+        sortBy={sortBy}
+        sortDir={sortDir}
+        statusClassMap={STATUS_CLASS_MAP}
+        pageStart={pageStart}
+        pageEnd={pageEnd}
+        total={total}
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        pageSizes={PAGE_SIZES}
+        onSort={handleSort}
+        onToggleSelectAllOnPage={toggleSelectAllOnPage}
+        onToggleOrderSelected={toggleOrderSelected}
+        onOrderClick={(orderId) => navigate(`/orders/${orderId}`)}
+        onPageChange={(nextPage) => updateParams({ page: String(nextPage) })}
+        onPageSizeChange={(size) => updateParams({ pageSize: String(size), page: '1' })}
+      />
 
-          <div className="pagination-bar">
-            <span className="pagination-info">
-              Showing {pageStart}–{pageEnd} of {total}
-            </span>
-            <div className="pagination-controls">
-              <button
-                className="pagination-btn"
-                type="button"
-                disabled={page <= 1}
-                onClick={() => updateParams({ page: String(page - 1) })}
-              >
-                Prev
-              </button>
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  className={`pagination-btn${pageNumber === page ? ' active' : ''}`}
-                  disabled={pageNumber === page}
-                  onClick={() => updateParams({ page: String(pageNumber) })}
-                >
-                  {pageNumber}
-                </button>
-              ))}
-              <button
-                className="pagination-btn"
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => updateParams({ page: String(page + 1) })}
-              >
-                Next
-              </button>
-            </div>
-            <div className="pagination-size">
-              <span>Rows:</span>
-              <select
-                className="form-select"
-                value={pageSize}
-                onChange={(event) => updateParams({ pageSize: event.target.value, page: '1' })}
-              >
-                {PAGE_SIZES.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isCreateOpen && (
-        <div className="modal-overlay" onClick={closeCreate}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Create Order</h2>
-              <button className="btn btn-ghost btn-sm" type="button" onClick={closeCreate} disabled={createLoading}>
-                &#10005;
-              </button>
-            </div>
-            <form onSubmit={handleCreateSubmit}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label className="form-label">Customer</label>
-                  <Combobox
-                    value={newOrderCustomerId}
-                    onChange={setNewOrderCustomerId}
-                    options={customerOptions}
-                    placeholder="Select customer"
-                    searchPlaceholder="Search customers..."
-                    emptyText="No customers found"
-                    disabled={createLoading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Items</label>
-                  {newOrderItems.map((item, index) => {
-                    const selectedProduct = products.find((product) => product.id === item.productId);
-                    const lineTotal = selectedProduct ? selectedProduct.price * item.quantity : 0;
-                    return (
-                      <div key={index} className="line-item-row">
-                        <Combobox
-                          value={item.productId}
-                          onChange={(value) =>
-                            setNewOrderItems((previous) =>
-                              previous.map((line, lineIndex) =>
-                                lineIndex === index ? { ...line, productId: value } : line
-                              )
-                            )
-                          }
-                          options={productOptions}
-                          placeholder="Select product"
-                          searchPlaceholder="Search products..."
-                          emptyText="No products found"
-                          disabled={createLoading}
-                        />
-                        <input
-                          className="form-input"
-                          type="number"
-                          min={1}
-                          step={1}
-                          value={item.quantity}
-                          onChange={(event) => {
-                            const quantity = Number.parseInt(event.target.value, 10);
-                            setNewOrderItems((previous) =>
-                              previous.map((line, lineIndex) =>
-                                lineIndex === index ? { ...line, quantity: Number.isNaN(quantity) ? 1 : quantity } : line
-                              )
-                            );
-                          }}
-                        />
-                        <span className="line-total">${lineTotal.toFixed(2)}</span>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          type="button"
-                          onClick={() =>
-                            setNewOrderItems((previous) => previous.filter((_, lineIndex) => lineIndex !== index))
-                          }
-                          disabled={newOrderItems.length <= 1}
-                        >
-                          &#10005;
-                        </button>
-                      </div>
-                    );
-                  })}
-                  <button
-                    className="btn btn-ghost btn-sm mt-sm"
-                    type="button"
-                    onClick={() =>
-                      setNewOrderItems((previous) => [...previous, { productId: null, quantity: 1 }])
-                    }
-                  >
-                    + Add Item
-                  </button>
-                  <div className="running-total">
-                    <span className="running-total-label">Total:</span>
-                    <span className="running-total-value">${runningTotal.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Notes (optional)</label>
-                  <textarea
-                    className="form-textarea"
-                    value={newOrderNotes}
-                    onChange={(event) => setNewOrderNotes(event.target.value)}
-                  />
-                </div>
-
-                {createError && <div className="form-error">{createError}</div>}
-              </div>
-
-              <div className="modal-footer">
-                <button className="btn btn-secondary" type="button" onClick={closeCreate} disabled={createLoading}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary" type="submit" disabled={createLoading}>
-                  {createLoading ? 'Creating...' : 'Create Order'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <CreateOrderModal
+        isOpen={isCreateOpen}
+        createLoading={createLoading}
+        createError={createError}
+        newOrderCustomerId={newOrderCustomerId}
+        customerOptions={customerOptions}
+        newOrderItems={newOrderItems}
+        products={products}
+        productOptions={productOptions}
+        runningTotal={runningTotal}
+        newOrderNotes={newOrderNotes}
+        onClose={closeCreate}
+        onSubmit={handleCreateSubmit}
+        onCustomerChange={setNewOrderCustomerId}
+        onItemProductChange={handleItemProductChange}
+        onItemQuantityChange={handleItemQuantityChange}
+        onRemoveItem={handleRemoveItem}
+        onAddItem={handleAddItem}
+        onNotesChange={setNewOrderNotes}
+      />
     </div>
   );
 }

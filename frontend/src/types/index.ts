@@ -10,6 +10,15 @@ export enum OrderStatus {
   CANCELLED = 'CANCELLED',
 }
 
+export const STATUS_CLASS_MAP: Record<OrderStatus, string> = {
+  [OrderStatus.PENDING]: 'pending',
+  [OrderStatus.CONFIRMED]: 'confirmed',
+  [OrderStatus.PROCESSING]: 'processing',
+  [OrderStatus.SHIPPED]: 'shipped',
+  [OrderStatus.DELIVERED]: 'delivered',
+  [OrderStatus.CANCELLED]: 'cancelled',
+};
+
 export interface Customer {
   id: number;
   name: string;

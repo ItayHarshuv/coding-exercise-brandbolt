@@ -32,19 +32,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import PageRefreshControls from '../components/PageRefreshControls';
+import PageHeader from '../components/PageHeader';
+import RecentOrdersTable from '../components/RecentOrdersTable';
 import StatCard from '../components/StatCard';
-import { DashboardStats, OrderStatus } from '../types';
+import { DashboardStats, OrderStatus, STATUS_CLASS_MAP } from '../types';
 
 const REFRESH_OPTIONS = [5, 10, 30];
-
-const STATUS_CLASS_MAP: Record<string, string> = {
-  [OrderStatus.PENDING]: 'pending',
-  [OrderStatus.CONFIRMED]: 'confirmed',
-  [OrderStatus.PROCESSING]: 'processing',
-  [OrderStatus.SHIPPED]: 'shipped',
-  [OrderStatus.DELIVERED]: 'delivered',
-  [OrderStatus.CANCELLED]: 'cancelled',
-};
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -89,22 +82,22 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Overview of your order system performance</p>
-        </div>
-        <PageRefreshControls
-          refreshing={refreshing}
-          autoRefresh={autoRefresh}
-          onAutoRefreshChange={setAutoRefresh}
-          refreshInterval={refreshInterval}
-          onRefreshIntervalChange={setRefreshInterval}
-          refreshOptions={REFRESH_OPTIONS}
-          onRefresh={() => void loadStats(false)}
-          refreshDisabled={refreshing}
-        />
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Overview of your order system performance"
+        actions={
+          <PageRefreshControls
+            refreshing={refreshing}
+            autoRefresh={autoRefresh}
+            onAutoRefreshChange={setAutoRefresh}
+            refreshInterval={refreshInterval}
+            onRefreshIntervalChange={setRefreshInterval}
+            refreshOptions={REFRESH_OPTIONS}
+            onRefresh={() => void loadStats(false)}
+            refreshDisabled={refreshing}
+          />
+        }
+      />
 
       {loading && (
         <div className="loading-container">
@@ -113,6 +106,7 @@ export default function DashboardPage() {
         </div>
       )}
       {error && <div className="alert alert-error">{error}</div>}
+      
       {!loading && stats && (
         <>
           <div className="card-grid card-grid-4 mb-lg" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
@@ -122,39 +116,11 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">Recent Orders</h2>
-            </div>
-            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
-              <table className="table table-clickable">
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Customer</th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.recentOrders.map((order) => (
-                    <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)}>
-                      <td className="font-semibold">#{order.id}</td>
-                      <td>{order.customer.name}</td>
-                      <td>
-                        <span className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="font-semibold">{formatCurrency(order.totalAmount)}</td>
-                      <td className="text-muted">{new Date(order.createdAt).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <RecentOrdersTable
+            orders={stats.recentOrders}
+            onOrderClick={(orderId) => navigate(`/orders/${orderId}`)}
+            formatCurrency={formatCurrency}
+          />
         </>
       )}
     </div>

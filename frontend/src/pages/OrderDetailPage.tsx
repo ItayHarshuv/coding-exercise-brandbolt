@@ -51,17 +51,15 @@ import { useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import OrderCustomerSection from '../components/OrderCustomerSection';
+import OrderInfoSection from '../components/OrderInfoSection';
+import OrderLineItemsSection from '../components/OrderLineItemsSection';
+import OrderNotesSection from '../components/OrderNotesSection';
+import OrderStatusChangeSelect from '../components/OrderStatusChangeSelect';
+import OrderStatusTimeline from '../components/OrderStatusTimeline';
+import PageHeader from '../components/PageHeader';
 import StatusChangeConfirmModal from '../components/StatusChangeConfirmModal';
-import { Order, OrderStatus } from '../types';
-
-const STATUS_FLOW: OrderStatus[] = [
-  OrderStatus.PENDING,
-  OrderStatus.CONFIRMED,
-  OrderStatus.PROCESSING,
-  OrderStatus.SHIPPED,
-  OrderStatus.DELIVERED,
-  OrderStatus.CANCELLED,
-];
+import { Order, OrderStatus, STATUS_CLASS_MAP } from '../types';
 
 const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
@@ -70,15 +68,6 @@ const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
   [OrderStatus.DELIVERED]: [],
   [OrderStatus.CANCELLED]: [],
-};
-
-const STATUS_CLASS_MAP: Record<string, string> = {
-  [OrderStatus.PENDING]: 'pending',
-  [OrderStatus.CONFIRMED]: 'confirmed',
-  [OrderStatus.PROCESSING]: 'processing',
-  [OrderStatus.SHIPPED]: 'shipped',
-  [OrderStatus.DELIVERED]: 'delivered',
-  [OrderStatus.CANCELLED]: 'cancelled',
 };
 
 export default function OrderDetailPage() {
@@ -168,24 +157,10 @@ export default function OrderDetailPage() {
     }
   };
 
-  const timelineProgress = (status: OrderStatus) => {
-    if (!order) return 'pending';
-    const currentIndex = STATUS_FLOW.indexOf(order.status);
-    const itemIndex = STATUS_FLOW.indexOf(status);
-    if (status === order.status) return 'current';
-    if (itemIndex <= currentIndex && order.status !== OrderStatus.CANCELLED) return 'passed';
-    if (status === OrderStatus.CANCELLED && order.status === OrderStatus.CANCELLED) return 'passed';
-    return 'pending';
-  };
-
   if (loading) {
     return (
       <div>
-        <div className="page-header">
-          <div className="page-header-left">
-            <h1 className="page-title">Order #{id}</h1>
-          </div>
-        </div>
+        <PageHeader title={`Order #${id}`} />
         <div className="loading-container">
           <span className="spinner"></span>
           Loading order...
@@ -197,11 +172,7 @@ export default function OrderDetailPage() {
   if (error || !order) {
     return (
       <div>
-        <div className="page-header">
-          <div className="page-header-left">
-            <h1 className="page-title">Order #{id}</h1>
-          </div>
-        </div>
+        <PageHeader title={`Order #${id}`} />
         <div className="alert alert-error">{error || 'Order not found'}</div>
         <Link to="/orders" className="detail-back">&larr; Back to Orders</Link>
       </div>
@@ -222,47 +193,34 @@ export default function OrderDetailPage() {
         &larr; Back to Orders
       </Link>
 
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1 className="page-title">
+      <PageHeader
+        title={
+          <>
             Order #{order.id}
             <span style={{ marginLeft: 12 }}>
               <span className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}>{order.status}</span>
             </span>
-          </h1>
-          <p className="page-subtitle">Created {new Date(order.createdAt).toLocaleString()}</p>
-        </div>
-        <div className="page-header-actions">
-          {availableTransitions.length > 0 && (
-            <select
-              className="form-select"
-              style={{ width: 'auto', minWidth: 180 }}
-              defaultValue=""
-              onChange={(event) => {
-                const value = event.target.value as OrderStatus | '';
-                if (!value) return;
-                setPendingStatus(value);
-                setIsStatusConfirmOpen(true);
-                event.target.value = '';
-              }}
-              disabled={statusLoading}
-            >
-              <option value="">Change status...</option>
-              {availableTransitions.map((statusOption) => (
-                <option key={statusOption} value={statusOption}>
-                  {statusOption}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-      </div>
+          </>
+        }
+        subtitle={`Created ${new Date(order.createdAt).toLocaleString()}`}
+        actions={
+          <OrderStatusChangeSelect
+            options={availableTransitions}
+            disabled={statusLoading}
+            onSelect={(value) => {
+              setPendingStatus(value);
+              setIsStatusConfirmOpen(true);
+            }}
+          />
+        }
+      />
 
       {actionMessage && (
         <div className={`alert ${actionMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}>
           {actionMessage.text}
         </div>
       )}
+
       <StatusChangeConfirmModal
         isOpen={isStatusConfirmOpen}
         title="Confirm Status Change"
@@ -279,130 +237,37 @@ export default function OrderDetailPage() {
         </p>
       </StatusChangeConfirmModal>
 
-      <div className="detail-section mb-lg">
-        <div className="detail-section-title">Status Timeline</div>
-        <div className="timeline">
-          {STATUS_FLOW.map((statusStep) => (
-            <div key={statusStep} className={`timeline-step ${timelineProgress(statusStep)}`}>
-              <div className="timeline-dot">
-                {timelineProgress(statusStep) === 'passed' ? '\u2713' : ''}
-              </div>
-              <span className="timeline-label">{statusStep}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <OrderStatusTimeline currentStatus={order.status} />
 
       <div className="detail-grid">
-        <div className="detail-section">
-          <div className="detail-section-title">Order Info</div>
-          <div className="detail-field">
-            <span className="detail-field-label">Status</span>
-            <span className="detail-field-value">
-              <span className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}>{order.status}</span>
-            </span>
-          </div>
-          <div className="detail-field">
-            <span className="detail-field-label">Created</span>
-            <span className="detail-field-value">{new Date(order.createdAt).toLocaleString()}</span>
-          </div>
-          <div className="detail-field">
-            <span className="detail-field-label">Updated</span>
-            <span className="detail-field-value">{new Date(order.updatedAt).toLocaleString()}</span>
-          </div>
-          <div className="detail-field">
-            <span className="detail-field-label">Total</span>
-            <span className="detail-field-value large">${Number(order.totalAmount).toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div className="detail-section">
-          <div className="detail-section-title">Customer</div>
-          <div className="detail-field">
-            <span className="detail-field-label">Name</span>
-            <span className="detail-field-value">{order.customer.name}</span>
-          </div>
-          <div className="detail-field">
-            <span className="detail-field-label">Email</span>
-            <span className="detail-field-value">{order.customer.email}</span>
-          </div>
-          <div className="detail-field">
-            <span className="detail-field-label">Phone</span>
-            <span className="detail-field-value">{order.customer.phone || 'Not provided'}</span>
-          </div>
-        </div>
+        <OrderInfoSection
+          status={order.status}
+          createdAt={order.createdAt}
+          updatedAt={order.updatedAt}
+          totalAmount={order.totalAmount}
+        />
+        <OrderCustomerSection
+          name={order.customer.name}
+          email={order.customer.email}
+          phone={order.customer.phone}
+        />
       </div>
 
-      <div className="detail-section mb-lg">
-        <div className="detail-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          Notes
-          {!isEditing && (
-            <button className="btn btn-ghost btn-sm" type="button" onClick={() => setIsEditing(true)}>
-              Edit
-            </button>
-          )}
-        </div>
-        {isEditing ? (
-          <div className="flex flex-col gap-md">
-            <textarea
-              className="form-textarea"
-              value={notesDraft}
-              onChange={(event) => setNotesDraft(event.target.value)}
-              rows={4}
-            />
-            <div className="flex gap-sm">
-              <button className="btn btn-primary btn-sm" type="button" onClick={() => void handleSaveNotes()} disabled={saveLoading}>
-                {saveLoading ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                className="btn btn-secondary btn-sm"
-                type="button"
-                onClick={() => {
-                  setNotesDraft(order.notes ?? '');
-                  setIsEditing(false);
-                }}
-                disabled={saveLoading}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="text-secondary">{order.notes || 'No notes'}</p>
-        )}
-      </div>
+      <OrderNotesSection
+        isEditing={isEditing}
+        notesDraft={notesDraft}
+        originalNotes={order.notes}
+        saveLoading={saveLoading}
+        onEdit={() => setIsEditing(true)}
+        onNotesChange={setNotesDraft}
+        onSave={() => void handleSaveNotes()}
+        onCancel={() => {
+          setNotesDraft(order.notes ?? '');
+          setIsEditing(false);
+        }}
+      />
 
-      <div className="detail-section">
-        <div className="detail-section-title">Line Items</div>
-        <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>SKU</th>
-                <th>Unit Price</th>
-                <th>Quantity</th>
-                <th>Line Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.items.map((item) => (
-                <tr key={item.id}>
-                  <td className="font-semibold" style={{ color: 'var(--color-text)' }}>{item.product.name}</td>
-                  <td><span className="text-mono text-xs">{item.product.sku}</span></td>
-                  <td>${Number(item.unitPrice).toFixed(2)}</td>
-                  <td>{item.quantity}</td>
-                  <td className="font-semibold" style={{ color: 'var(--color-text)' }}>${Number(item.lineTotal).toFixed(2)}</td>
-                </tr>
-              ))}
-              <tr className="table-subtotal">
-                <td colSpan={4}>Subtotal</td>
-                <td>${Number(order.totalAmount).toFixed(2)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <OrderLineItemsSection items={order.items} subtotal={order.totalAmount} />
     </div>
   );
 }

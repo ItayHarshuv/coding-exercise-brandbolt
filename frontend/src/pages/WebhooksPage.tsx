@@ -43,7 +43,13 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import api from '../api/client';
+import PageHeader from '../components/PageHeader';
 import PageRefreshControls from '../components/PageRefreshControls';
+import WebhookSubscriptionFormModal, {
+  WebhookFormState,
+} from '../components/WebhookSubscriptionFormModal';
+import WebhookSubscriptionsList from '../components/WebhookSubscriptionsList';
+import WebhookTestResultModal from '../components/WebhookTestResultModal';
 import { PaginatedResponse, WebhookDelivery, WebhookSubscription } from '../types';
 
 const EVENT_OPTIONS = [
@@ -55,13 +61,6 @@ const EVENT_OPTIONS = [
 ];
 const REFRESH_OPTIONS = [5, 10, 30];
 
-type FormState = {
-  url: string;
-  secret: string;
-  events: string[];
-  isActive: boolean;
-};
-
 export default function WebhooksPage() {
   const [subscriptions, setSubscriptions] = useState<WebhookSubscription[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,7 +69,7 @@ export default function WebhooksPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<WebhookSubscription | null>(null);
-  const [form, setForm] = useState<FormState>({
+  const [form, setForm] = useState<WebhookFormState>({
     url: '',
     secret: '',
     events: [],
@@ -239,286 +238,64 @@ export default function WebhooksPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1 className="page-title">Webhooks</h1>
-          <p className="page-subtitle">Manage webhook subscriptions and delivery logs</p>
-        </div>
-        <PageRefreshControls
-          refreshing={refreshing}
-          autoRefresh={autoRefresh}
-          onAutoRefreshChange={setAutoRefresh}
-          refreshInterval={refreshInterval}
-          onRefreshIntervalChange={setRefreshInterval}
-          refreshOptions={REFRESH_OPTIONS}
-          onRefresh={() => void loadSubscriptions(false)}
-          refreshDisabled={refreshing}
-        />
-        <button className="btn btn-primary" type="button" onClick={openCreate}>
-          + Add Subscription
-        </button>
-      </div>
+      <PageHeader
+        title="Webhooks"
+        subtitle="Manage webhook subscriptions and delivery logs"
+        actions={
+          <>
+            <PageRefreshControls
+              refreshing={refreshing}
+              autoRefresh={autoRefresh}
+              onAutoRefreshChange={setAutoRefresh}
+              refreshInterval={refreshInterval}
+              onRefreshIntervalChange={setRefreshInterval}
+              refreshOptions={REFRESH_OPTIONS}
+              onRefresh={() => void loadSubscriptions(false)}
+              refreshDisabled={refreshing}
+            />
+            <button className="btn btn-primary" type="button" onClick={openCreate}>
+              + Add Subscription
+            </button>
+          </>
+        }
+      />
 
       {message && (
         <div className={`alert alert-${message.type}`}>{message.text}</div>
       )}
       {error && <div className="alert alert-error">{error}</div>}
 
-      {loading ? (
-        <div className="loading-container">
-          <span className="spinner"></span>
-          Loading subscriptions...
-        </div>
-      ) : (
-        <div className="flex flex-col gap-md">
-          {subscriptions.length === 0 && (
-            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-              <p className="text-muted">No subscriptions yet. Create one to get started.</p>
-            </div>
-          )}
-          {subscriptions.map((subscription) => (
-            <div key={subscription.id} className="subscription-card">
-              <div className="subscription-card-header">
-                <span className="subscription-url">{subscription.url}</span>
-                <span className={`badge ${subscription.isActive ? 'badge-active' : 'badge-inactive'}`}>
-                  {subscription.isActive ? 'Active' : 'Inactive'}
-                </span>
-                <div className="subscription-actions">
-                  <label className="toggle" style={{ margin: 0 }}>
-                    <input
-                      type="checkbox"
-                      checked={subscription.isActive}
-                      onChange={() => void toggleActive(subscription)}
-                    />
-                    <span className="toggle-track"></span>
-                  </label>
-                  <button className="btn btn-ghost btn-sm" type="button" onClick={() => openEdit(subscription)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-danger btn-sm" type="button" onClick={() => void deleteSubscription(subscription)}>
-                    Delete
-                  </button>
-                  <button className="btn btn-accent btn-sm" type="button" onClick={() => void sendTest(subscription.id)}>
-                    Test
-                  </button>
-                  <button className="btn btn-secondary btn-sm" type="button" onClick={() => toggleExpanded(subscription.id)}>
-                    {expandedIds.has(subscription.id) ? 'Hide Log' : 'Show Log'}
-                  </button>
-                </div>
-              </div>
-              <div className="subscription-events">
-                {subscription.events.map((eventName) => (
-                  <span key={eventName} className="event-tag">{eventName}</span>
-                ))}
-              </div>
+      <WebhookSubscriptionsList
+        loading={loading}
+        subscriptions={subscriptions}
+        expandedIds={expandedIds}
+        deliveryData={deliveryData}
+        deliveryLoadingIds={deliveryLoadingIds}
+        deliveryPageBySubscription={deliveryPageBySubscription}
+        onToggleActive={(subscription) => void toggleActive(subscription)}
+        onEdit={openEdit}
+        onDelete={(subscription) => void deleteSubscription(subscription)}
+        onSendTest={(subscriptionId) => void sendTest(subscriptionId)}
+        onToggleExpanded={toggleExpanded}
+        onRetryDelivery={(subscriptionId, deliveryId) => void retryDelivery(subscriptionId, deliveryId)}
+        onLoadDeliveriesPage={(subscriptionId, page) => void loadDeliveries(subscriptionId, page)}
+      />
 
-              {expandedIds.has(subscription.id) && (
-                <div className="delivery-section">
-                  <div className="delivery-section-header">
-                    Delivery Log
-                    {deliveryLoadingIds.has(subscription.id) && (
-                      <span className="refreshing-indicator">
-                        <span className="spinner"></span>
-                        Loading
-                      </span>
-                    )}
-                  </div>
-                  {deliveryData[subscription.id] && (
-                    <>
-                      <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
-                        <table className="table">
-                          <thead>
-                            <tr>
-                              <th>Event</th>
-                              <th>Order ID</th>
-                              <th>Status Code</th>
-                              <th>Result</th>
-                              <th>Timestamp</th>
-                              <th>Attempt</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {deliveryData[subscription.id].data.map((delivery) => (
-                              <tr key={delivery.id}>
-                                <td><span className="event-tag">{delivery.event}</span></td>
-                                <td className="font-semibold">#{delivery.orderId}</td>
-                                <td>{delivery.statusCode ?? 'N/A'}</td>
-                                <td>
-                                  <span className={`badge ${delivery.success ? 'badge-success' : 'badge-failure'}`}>
-                                    {delivery.success ? 'Success' : 'Failed'}
-                                  </span>
-                                </td>
-                                <td className="text-muted">
-                                  {delivery.deliveredAt ? new Date(delivery.deliveredAt).toLocaleString() : 'N/A'}
-                                </td>
-                                <td>{delivery.attemptNumber}</td>
-                                <td>
-                                  {!delivery.success && (
-                                    <button
-                                      className="btn btn-ghost btn-sm"
-                                      type="button"
-                                      onClick={() => void retryDelivery(subscription.id, delivery.id)}
-                                    >
-                                      Retry
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="delivery-pagination">
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          type="button"
-                          disabled={(deliveryPageBySubscription[subscription.id] || 1) <= 1}
-                          onClick={() => void loadDeliveries(subscription.id, (deliveryPageBySubscription[subscription.id] || 1) - 1)}
-                        >
-                          Prev
-                        </button>
-                        <span>
-                          Page {deliveryPageBySubscription[subscription.id] || 1} of{' '}
-                          {Math.max(1, Math.ceil(deliveryData[subscription.id].total / deliveryData[subscription.id].pageSize))}
-                        </span>
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          type="button"
-                          disabled={
-                            (deliveryPageBySubscription[subscription.id] || 1) >=
-                            Math.max(1, Math.ceil(deliveryData[subscription.id].total / deliveryData[subscription.id].pageSize))
-                          }
-                          onClick={() => void loadDeliveries(subscription.id, (deliveryPageBySubscription[subscription.id] || 1) + 1)}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <WebhookSubscriptionFormModal
+        isOpen={isFormOpen}
+        title={formTitle}
+        form={form}
+        eventOptions={EVENT_OPTIONS}
+        saving={saving}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleSubmit}
+        onFormChange={setForm}
+      />
 
-      {isFormOpen && (
-        <div className="modal-overlay" onClick={() => setIsFormOpen(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">{formTitle}</h2>
-              <button className="btn btn-ghost btn-sm" type="button" onClick={() => setIsFormOpen(false)} disabled={saving}>
-                &#10005;
-              </button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label className="form-label">URL</label>
-                  <input
-                    className="form-input"
-                    type="url"
-                    value={form.url}
-                    onChange={(event) => setForm((previous) => ({ ...previous, url: event.target.value }))}
-                    placeholder="https://example.com/webhook"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Secret</label>
-                  <input
-                    className="form-input"
-                    value={form.secret}
-                    onChange={(event) => setForm((previous) => ({ ...previous, secret: event.target.value }))}
-                    placeholder="Webhook signing secret"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Events</label>
-                  <div className="form-checkbox-group">
-                    {EVENT_OPTIONS.map((eventName) => (
-                      <label
-                        key={eventName}
-                        className={`form-checkbox-label${form.events.includes(eventName) ? ' checked' : ''}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={form.events.includes(eventName)}
-                          onChange={(event) =>
-                            setForm((previous) => ({
-                              ...previous,
-                              events: event.target.checked
-                                ? [...previous.events, eventName]
-                                : previous.events.filter((current) => current !== eventName),
-                            }))
-                          }
-                        />
-                        {eventName}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="toggle">
-                    <input
-                      type="checkbox"
-                      checked={form.isActive}
-                      onChange={(event) => setForm((previous) => ({ ...previous, isActive: event.target.checked }))}
-                    />
-                    <span className="toggle-track"></span>
-                    Active
-                  </label>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" type="button" onClick={() => setIsFormOpen(false)} disabled={saving}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary" type="submit" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {testResult && (
-        <div className="modal-overlay" onClick={() => setTestResult(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Test Result</h2>
-              <button className="btn btn-ghost btn-sm" type="button" onClick={() => setTestResult(null)}>
-                &#10005;
-              </button>
-            </div>
-            <div className="test-result-body">
-              <div className="flex items-center gap-md">
-                <span className={`badge ${testResult.success ? 'badge-success' : 'badge-failure'}`}>
-                  {testResult.success ? 'Success' : 'Failed'}
-                </span>
-                <span className="text-secondary text-sm">
-                  Status: {testResult.statusCode ?? 'N/A'}
-                </span>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Event</label>
-                <span className="event-tag">{testResult.event}</span>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Response Body</label>
-                <p className="text-secondary text-sm">{testResult.responseBody ?? 'N/A'}</p>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Payload</label>
-                <pre>{JSON.stringify(testResult.payload, null, 2)}</pre>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <WebhookTestResultModal
+        result={testResult}
+        onClose={() => setTestResult(null)}
+      />
     </div>
   );
 }
