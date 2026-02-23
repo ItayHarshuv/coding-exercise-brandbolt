@@ -56,6 +56,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import Combobox, { ComboboxOption } from '../components/Combobox';
 import StatusChangeConfirmModal from '../components/StatusChangeConfirmModal';
 import {
   BulkStatusResult,
@@ -102,8 +103,6 @@ export default function OrdersPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [customerSearch, setCustomerSearch] = useState('');
-  const [productSearch, setProductSearch] = useState('');
 
   const [newOrderCustomerId, setNewOrderCustomerId] = useState<number | null>(null);
   const [newOrderNotes, setNewOrderNotes] = useState('');
@@ -195,28 +194,25 @@ export default function OrdersPage() {
   const pageStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const pageEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
 
-  const visibleCustomerOptions = useMemo(
+  const customerOptions = useMemo<ComboboxOption<number>[]>(
     () =>
-      customers.filter((customer) =>
-        customer.name.toLowerCase().includes(customerSearch.toLowerCase())
-      ),
-    [customers, customerSearch]
-  );
-  const visibleProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(productSearch.toLowerCase())
+      customers.map((customer) => ({
+        value: customer.id,
+        label: `${customer.name} (${customer.email})`,
+        searchText: `${customer.name} ${customer.email}`,
+      })),
+    [customers]
   );
 
-  useEffect(() => {
-    if (!isCreateOpen) return;
-    const timeout = window.setTimeout(() => {
-      if (!customerSearch.trim()) {
-        setNewOrderCustomerId(null);
-        return;
-      }
-      setNewOrderCustomerId(visibleCustomerOptions[0]?.id ?? null);
-    }, 300);
-    return () => window.clearTimeout(timeout);
-  }, [customerSearch, isCreateOpen, visibleCustomerOptions]);
+  const productOptions = useMemo<ComboboxOption<number>[]>(
+    () =>
+      products.map((product) => ({
+        value: product.id,
+        label: `${product.name} (${product.sku}) - $${Number(product.price).toFixed(2)} - stock: ${product.stockQuantity}`,
+        searchText: `${product.name} ${product.sku}`,
+      })),
+    [products]
+  );
 
   const runningTotal = newOrderItems.reduce((acc, item) => {
     const product = products.find((productItem) => productItem.id === item.productId);
@@ -304,8 +300,6 @@ export default function OrdersPage() {
     setNewOrderNotes('');
     setNewOrderItems([{ productId: null, quantity: 1}]);
     setCreateError(null);
-    setCustomerSearch('');
-    setProductSearch('');
   };
 
   const closeCreate = () => {
@@ -599,60 +593,39 @@ export default function OrdersPage() {
               <div className="modal-body">
                 <div className="form-group">
                   <label className="form-label">Customer</label>
-                  <input
-                    className="form-input"
-                    value={customerSearch}
-                    onChange={(event) => setCustomerSearch(event.target.value)}
-                    placeholder="Search customers..."
+                  <Combobox
+                    value={newOrderCustomerId}
+                    onChange={setNewOrderCustomerId}
+                    options={customerOptions}
+                    placeholder="Select customer"
+                    searchPlaceholder="Search customers..."
+                    emptyText="No customers found"
+                    disabled={createLoading}
                   />
-                  <select
-                    className="form-select"
-                    value={newOrderCustomerId ?? ''}
-                    onChange={(event) => setNewOrderCustomerId(Number(event.target.value))}
-                    required
-                  >
-                    <option value="">Select customer</option>
-                    {visibleCustomerOptions.map((customer) => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} ({customer.email})
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">Items</label>
-                  {/* <input
-                    className="form-input"
-                    value={productSearch}
-                    onChange={(event) => setProductSearch(event.target.value)}
-                    placeholder="Search products..."
-                  /> */}
                   {newOrderItems.map((item, index) => {
                     const selectedProduct = products.find((product) => product.id === item.productId);
                     const lineTotal = selectedProduct ? selectedProduct.price * item.quantity : 0;
                     return (
                       <div key={index} className="line-item-row">
-                        <select
-                          className="form-select"
-                          value={item.productId ?? ''}
-                          onChange={(event) => {
-                            const value = Number(event.target.value);
+                        <Combobox
+                          value={item.productId}
+                          onChange={(value) =>
                             setNewOrderItems((previous) =>
                               previous.map((line, lineIndex) =>
-                                lineIndex === index ? { ...line, productId: Number.isNaN(value) ? null : value } : line
+                                lineIndex === index ? { ...line, productId: value } : line
                               )
-                            );
-                          }}
-                          required
-                        >
-                          <option value="">Select product</option>
-                          {visibleProducts.map((product) => (
-                            <option key={product.id} value={product.id}>
-                              {product.name} ({product.sku}) — ${Number(product.price).toFixed(2)} — stock: {product.stockQuantity}
-                            </option>
-                          ))}
-                        </select>
+                            )
+                          }
+                          options={productOptions}
+                          placeholder="Select product"
+                          searchPlaceholder="Search products..."
+                          emptyText="No products found"
+                          disabled={createLoading}
+                        />
                         <input
                           className="form-input"
                           type="number"
@@ -686,7 +659,7 @@ export default function OrdersPage() {
                     className="btn btn-ghost btn-sm mt-sm"
                     type="button"
                     onClick={() =>
-                      setNewOrderItems((previous) => [...previous, { productId: null, quantity: 1, productSearch: '' }])
+                      setNewOrderItems((previous) => [...previous, { productId: null, quantity: 1 }])
                     }
                   >
                     + Add Item
