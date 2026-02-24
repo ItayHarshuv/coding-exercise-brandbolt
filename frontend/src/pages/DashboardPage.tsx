@@ -114,26 +114,25 @@ export default function DashboardPage() {
 
       {!loading && stats && (
         <>
-          <div
-            className="card-grid card-grid-4 mb-lg"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            }}
-          >
-            <StatCard
-              label="Total Revenue"
-              value={formatCurrency(stats.totalRevenue)}
-              variant="revenue"
-              valueClassName="revenue"
-            />
-            {statusOrder.map((status) => (
+          <div className="dashboard-stats mb-lg">
+            <div className="dashboard-revenue-card">
               <StatCard
-                key={status}
-                label={status}
-                value={stats.statusCounts[status] ?? 0}
-                variant={STATUS_CLASS_MAP[status]}
+                label="Total Revenue"
+                value={formatCurrency(stats.totalRevenue)}
+                variant="revenue"
+                valueClassName="revenue"
               />
-            ))}
+            </div>
+            <div className="dashboard-status-stack">
+              {statusOrder.map((status) => (
+                <StatCard
+                  key={status}
+                  label={status}
+                  value={stats.statusCounts[status] ?? 0}
+                  variant={STATUS_CLASS_MAP[status]}
+                />
+              ))}
+            </div>
           </div>
 
           <RecentOrdersTable

@@ -201,7 +201,7 @@
 .detail-field-value.large {
   font-size: var(--text-xl);
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-text);
 }
 
 .timeline {

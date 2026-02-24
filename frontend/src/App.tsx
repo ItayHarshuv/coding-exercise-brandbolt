@@ -20,62 +20,64 @@ export default function App() {
     <BrowserRouter>
       <div className="app">
         <header className="topbar">
-          <div className="topbar-brand">
-            <div className="topbar-brand-icon">O</div>
-            <div>
-              <div className="topbar-brand-text">OrderFlow</div>
-              <div className="topbar-brand-sub">Management</div>
+          <div className="topbar-inner">
+            <div className="topbar-brand">
+              <div className="topbar-brand-icon">O</div>
+              <div>
+                <div className="topbar-brand-text">OrderFlow</div>
+                <div className="topbar-brand-sub">Management</div>
+              </div>
             </div>
+
+            <button
+              type="button"
+              className="topbar-toggle"
+              onClick={() => setIsMenuOpen((open) => !open)}
+              aria-expanded={isMenuOpen}
+              aria-controls="topbar-nav"
+              aria-label={
+                isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+              }
+            >
+              {isMenuOpen ? "\u00d7" : "\u2630"}
+            </button>
+
+            <nav
+              id="topbar-nav"
+              className={`topbar-nav${isMenuOpen ? " open" : ""}`}
+            >
+              <NavLink
+                to="/dashboard"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  isActive ? "nav-link active" : "nav-link"
+                }
+              >
+                <span className="nav-link-icon">&#9633;</span>
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/orders"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  isActive ? "nav-link active" : "nav-link"
+                }
+              >
+                <span className="nav-link-icon">&#9776;</span>
+                Orders
+              </NavLink>
+              <NavLink
+                to="/webhooks"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  isActive ? "nav-link active" : "nav-link"
+                }
+              >
+                <span className="nav-link-icon">&#9889;&#65038;</span>
+                Webhooks
+              </NavLink>
+            </nav>
           </div>
-
-          <button
-            type="button"
-            className="topbar-toggle"
-            onClick={() => setIsMenuOpen((open) => !open)}
-            aria-expanded={isMenuOpen}
-            aria-controls="topbar-nav"
-            aria-label={
-              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
-            }
-          >
-            {isMenuOpen ? "\u00d7" : "\u2630"}
-          </button>
-
-          <nav
-            id="topbar-nav"
-            className={`topbar-nav${isMenuOpen ? " open" : ""}`}
-          >
-            <NavLink
-              to="/dashboard"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-            >
-              <span className="nav-link-icon">&#9633;</span>
-              Dashboard
-            </NavLink>
-            <NavLink
-              to="/orders"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-            >
-              <span className="nav-link-icon">&#9776;</span>
-              Orders
-            </NavLink>
-            <NavLink
-              to="/webhooks"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-            >
-              <span className="nav-link-icon">&#9889;</span>
-              Webhooks
-            </NavLink>
-          </nav>
         </header>
 
         <main className="main">

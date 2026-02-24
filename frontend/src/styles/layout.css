@@ -10,13 +10,20 @@
   width: 100%;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md) var(--space-lg);
   position: sticky;
   top: 0;
   z-index: 150;
+}
+
+.topbar-inner {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-2xl);
+  position: relative;
 }
 
 .topbar-brand {
@@ -29,7 +36,7 @@
 .topbar-brand-icon {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #e8c840 100%);
+  background: var(--color-primary);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -59,7 +66,7 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 .nav-link {
@@ -85,7 +92,7 @@
 .nav-link.active {
   background-color: var(--color-primary-subtle);
   color: var(--color-primary);
-  border-color: rgba(227, 191, 57, 0.4);
+  border-color: transparent;
 }
 
 .nav-link-icon {

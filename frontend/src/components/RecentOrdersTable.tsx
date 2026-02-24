@@ -18,13 +18,17 @@ export default function RecentOrdersTable({
       </div>
       <div
         className="table-wrapper"
-        style={{ border: "none", borderRadius: 0 }}
+        style={{
+          border: "none",
+          borderRadius: 0,
+          marginLeft: "calc(-1 * var(--space-lg))",
+          marginRight: "calc(-1 * var(--space-lg))",
+        }}
       >
         <table className="table table-clickable">
           <thead>
             <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
+              <th>Customer / Order</th>
               <th>Status</th>
               <th>Total</th>
               <th>Date</th>
@@ -33,8 +37,10 @@ export default function RecentOrdersTable({
           <tbody>
             {orders.map((order) => (
               <tr key={order.id} onClick={() => onOrderClick(order.id)}>
-                <td className="font-semibold">#{order.id}</td>
-                <td>{order.customer.name}</td>
+                <td>
+                  <div>{order.customer.name}</div>
+                  <div className="text-muted">#{order.id}</div>
+                </td>
                 <td>
                   <span
                     className={`badge badge-${STATUS_CLASS_MAP[order.status]}`}
@@ -46,7 +52,7 @@ export default function RecentOrdersTable({
                   {formatCurrency(order.totalAmount)}
                 </td>
                 <td className="text-muted">
-                  {new Date(order.createdAt).toLocaleString()}
+                  {new Date(order.createdAt).toLocaleDateString()}
                 </td>
               </tr>
             ))}

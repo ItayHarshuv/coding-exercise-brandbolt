@@ -27,13 +27,6 @@ export default function PageRefreshControls({
 }: PageRefreshControlsProps) {
   return (
     <div className="page-header-actions">
-      {refreshing && (
-        <span className="refreshing-indicator">
-          <span className="spinner"></span>
-          Refreshing
-        </span>
-      )}
-
       <label className="toggle">
         <input
           type="checkbox"
@@ -61,12 +54,19 @@ export default function PageRefreshControls({
       </select>
 
       <button
-        className="btn btn-secondary"
+        className="btn btn-secondary btn-icon"
         type="button"
         onClick={onRefresh}
         disabled={refreshDisabled || refreshing}
+        aria-label={refreshButtonLabel}
+        title={refreshButtonLabel}
       >
-        {refreshButtonLabel}
+        <span
+          className={`refresh-button-icon${refreshing ? " is-spinning" : ""}`}
+          aria-hidden="true"
+        >
+          {"\u21bb"}
+        </span>
       </button>
 
       {autoRefresh && <span className="badge badge-active">Live</span>}

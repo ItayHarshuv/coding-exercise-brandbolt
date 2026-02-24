@@ -85,10 +85,9 @@ export default function OrdersTable({
                 className={`sort-btn${sortBy === "id" ? " active" : ""}`}
                 onClick={() => onSort("id")}
               >
-                ID{sortIndicator("id")}
+                Customer / Order{sortIndicator("id")}
               </button>
             </th>
-            <th>Customer</th>
             <th>
               <button
                 type="button"
@@ -130,8 +129,10 @@ export default function OrdersTable({
                   }
                 />
               </td>
-              <td className="font-semibold">#{order.id}</td>
-              <td>{order.customer.name}</td>
+              <td>
+                <div>{order.customer.name}</div>
+                <div className="text-muted">#{order.id}</div>
+              </td>
               <td>
                 <span className={`badge badge-${statusClassMap[order.status]}`}>
                   {order.status}
@@ -141,13 +142,13 @@ export default function OrdersTable({
                 ${Number(order.totalAmount).toFixed(2)}
               </td>
               <td className="text-muted">
-                {new Date(order.createdAt).toLocaleString()}
+                {new Date(order.createdAt).toLocaleDateString()}
               </td>
             </tr>
           ))}
           {orders.length === 0 && (
             <tr>
-              <td colSpan={6} className="table-empty">
+              <td colSpan={5} className="table-empty">
                 No orders found.
               </td>
             </tr>

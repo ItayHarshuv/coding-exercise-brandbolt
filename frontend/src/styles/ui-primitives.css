@@ -91,7 +91,7 @@
 }
 
 .stat-card-value.revenue {
-  color: var(--color-primary);
+  color: var(--color-text);
 }
 
 .stat-card--pending::before {
@@ -113,8 +113,52 @@
   background: var(--color-status-cancelled);
 }
 .stat-card--revenue::before {
-  background: linear-gradient(90deg, var(--color-primary) 0%, #e8c840 100%);
+  background: var(--color-revenue-accent);
   height: 3px;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--space-md);
+  align-items: stretch;
+}
+
+.dashboard-revenue-card {
+  display: flex;
+}
+
+.dashboard-revenue-card .stat-card {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+}
+
+.dashboard-revenue-card .stat-card-value {
+  font-size: clamp(2rem, 3.2vw, 3rem);
+}
+
+.dashboard-status-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+  grid-auto-rows: min-content;
+  align-content: start;
+}
+
+.dashboard-status-stack .stat-card {
+  padding: var(--space-sm) var(--space-md);
+  gap: 2px;
+  min-height: 0;
+}
+
+.dashboard-status-stack .stat-card-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-status-stack .stat-card-value {
+  font-size: var(--text-lg);
 }
 
 .btn {
@@ -135,24 +179,32 @@
   text-decoration: none;
 }
 
+.refresh-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.refresh-button-icon.is-spinning {
+  animation: spin 0.7s linear infinite;
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #ddb92e 100%);
+  background: var(--color-primary);
   color: var(--color-text-inverse);
   border-color: transparent;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-hover) 0%,
-    #e8c840 100%
-  );
-  box-shadow: 0 0 20px var(--color-primary-glow);
+  background: var(--color-primary-hover);
+  box-shadow: none;
 }
 
 .btn-secondary {
@@ -321,11 +373,7 @@
 }
 
 .badge::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  content: none;
 }
 
 .badge-pending {
@@ -550,3 +598,4 @@
   width: 14px;
   height: 14px;
 }
+

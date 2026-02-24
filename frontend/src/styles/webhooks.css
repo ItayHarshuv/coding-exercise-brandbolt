@@ -2,7 +2,6 @@
 
 .delivery-section {
   background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   margin-top: var(--space-md);
   overflow: hidden;
@@ -17,6 +16,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.delivery-section .table-wrapper {
+  margin: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.delivery-section .table thead {
+  background: var(--color-surface-hover);
+}
+
+.delivery-section .table tbody tr:nth-child(even) {
+  background-color: var(--color-surface-hover);
+}
+
+.delivery-section .table tbody tr:nth-child(odd) {
+  background-color: var(--color-card);
 }
 
 .delivery-pagination {

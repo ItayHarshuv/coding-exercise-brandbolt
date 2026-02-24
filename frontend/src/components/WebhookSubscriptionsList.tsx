@@ -128,15 +128,6 @@ export default function WebhookSubscriptionsList({
 
             {isExpanded && (
               <div className="delivery-section">
-                <div className="delivery-section-header">
-                  Delivery Log
-                  {deliveryLoadingIds.has(subscription.id) && (
-                    <span className="refreshing-indicator">
-                      <span className="spinner"></span>
-                      Loading
-                    </span>
-                  )}
-                </div>
                 {subscriptionDeliveryData && (
                   <>
                     <div
@@ -178,7 +169,7 @@ export default function WebhookSubscriptionsList({
                                 {delivery.deliveredAt
                                   ? new Date(
                                       delivery.deliveredAt,
-                                    ).toLocaleString()
+                                    ).toLocaleDateString()
                                   : "N/A"}
                               </td>
                               <td>{delivery.attemptNumber}</td>
