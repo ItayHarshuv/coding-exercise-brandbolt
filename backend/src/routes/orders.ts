@@ -8,13 +8,13 @@ import { triggerWebhooks } from "../services/webhook.service";
 import { In } from "typeorm";
 
 const router = Router();
-const ALLOWED_SORT_COLUMNS = new Set([
+const ALLOWED_SORT_COLUMNS = [
   "id",
   "status",
   "totalAmount",
   "createdAt",
-]);
-const ALLOWED_PAGE_SIZES = new Set([10, 25, 50]);
+];
+const ALLOWED_PAGE_SIZES = [10, 25, 50];
 const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
   [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
@@ -28,7 +28,7 @@ function isOrderStatus(value: string): value is OrderStatus {
   return Object.values(OrderStatus).includes(value as OrderStatus);
 }
 
-function canTransition(from: OrderStatus, to: OrderStatus): boolean {
+function canTransition(from: OrderStatus, to: OrderStatus) {
   return STATUS_TRANSITIONS[from].includes(to);
 }
 
@@ -62,10 +62,10 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
     );
     const requestedPageSize =
       Number.parseInt(String(req.query.pageSize ?? "10"), 10) || 10;
-    const pageSize = ALLOWED_PAGE_SIZES.has(requestedPageSize)
+    const pageSize = ALLOWED_PAGE_SIZES.includes(requestedPageSize)
       ? requestedPageSize
       : 10;
-    const sortColumn = ALLOWED_SORT_COLUMNS.has(sortBy) ? sortBy : "createdAt";
+    const sortColumn = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : "createdAt";
     const sortDir = sortDirRaw === "ASC" ? "ASC" : "DESC";
     const statuses = rawStatus
       .split(",")
@@ -135,10 +135,11 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
     const customerRepo = AppDataSource.getRepository(Customer);
     const productRepo = AppDataSource.getRepository(Product);
     const orderRepo = AppDataSource.getRepository(Order);
+    const orderItemRepo = AppDataSource.getRepository(OrderItem);
 
     const customer = await customerRepo.findOne({ where: { id: customerId } });
     if (!customer) {
-      res.status(400).json({ error: "Customer not found" });
+      res.status(404).json({ error: "Customer not found" });
       return;
     }
 
@@ -157,7 +158,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       }
       const product = productMap.get(item.productId);
       if (!product) {
-        res.status(400).json({ error: `Product ${item.productId} not found` });
+        res.status(404).json({ error: `Product ${item.productId} not found` });
         return;
       }
       if (item.quantity > product.stockQuantity) {
@@ -172,12 +173,12 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       const product = productMap.get(item.productId)!;
       const unitPrice = Number(product.price);
       const lineTotal = unitPrice * item.quantity;
-      const orderItem = new OrderItem();
-      orderItem.productId = product.id;
-      orderItem.quantity = item.quantity;
-      orderItem.unitPrice = unitPrice;
-      orderItem.lineTotal = lineTotal;
-      return orderItem;
+      return orderItemRepo.create({
+        productId: product.id,
+        quantity: item.quantity,
+        unitPrice,
+        lineTotal,
+      });
     });
 
     const totalAmount = orderItems.reduce(

@@ -11,7 +11,7 @@ import {
 const router = Router();
 const DEFAULT_PAGE_SIZE = 20;
 
-function isValidUrl(value: string): boolean {
+function isValidUrl(value: string) {
   try {
     new URL(value);
     return true;

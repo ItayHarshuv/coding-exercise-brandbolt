@@ -328,7 +328,7 @@ export default function OrdersPage() {
     resetCreateForm();
   };
 
-  const validateCreateForm = (): string | null => {
+  const validateCreateForm = () => {
     if (!newOrderCustomerId) return "Customer is required";
     if (newOrderItems.length === 0) return "At least one line item is required";
     for (const item of newOrderItems) {

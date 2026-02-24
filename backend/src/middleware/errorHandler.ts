@@ -26,7 +26,7 @@ export function errorHandler(
   });
 }
 
-export function createError(message: string, statusCode: number): AppError {
+export function createError(message: string, statusCode: number) {
   const error: AppError = new Error(message);
   error.statusCode = statusCode;
   return error;

@@ -11,7 +11,7 @@ export type WebhookPayload = {
   timestamp: string;
 };
 
-function signPayload(payload: WebhookPayload, secret: string): string {
+function signPayload(payload: WebhookPayload, secret: string) {
   return crypto
     .createHmac("sha256", secret)
     .update(JSON.stringify(payload))
@@ -22,7 +22,7 @@ export async function sendAndRecordDelivery(
   subscription: WebhookSubscription,
   payload: WebhookPayload,
   attemptNumber: number,
-): Promise<WebhookDelivery> {
+) {
   const deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
   const signature = signPayload(payload, subscription.secret);
 
@@ -106,7 +106,7 @@ export async function triggerWebhooks(
   orderId: number,
   event: string,
   payload: Record<string, any>,
-): Promise<void> {
+) {
   const subscriptionRepo = AppDataSource.getRepository(WebhookSubscription);
   const subscriptions = await subscriptionRepo
     .createQueryBuilder("subscription")
@@ -149,7 +149,7 @@ export async function triggerWebhooks(
  */
 export async function retryWebhookDelivery(
   deliveryId: number,
-): Promise<WebhookDelivery> {
+) {
   const deliveryRepo = AppDataSource.getRepository(WebhookDelivery);
 
   const originalDelivery = await deliveryRepo.findOne({
